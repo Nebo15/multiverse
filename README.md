@@ -34,7 +34,7 @@ Insert this plug into your API pipeline (```router.ex```):
 pipeline :api do
   plug :accepts, ["json"]
   plug :put_secure_browser_headers
-  plug :multiverse
+  plug Multiverse
 end
 ```
 
@@ -46,11 +46,13 @@ defmodule GateName do
 
   def mutate_request(%Plug.Conn{} = conn) do
     # Mutate your request here
+    IO.inspect "GateName.mutate_request applied to request"
     conn
   end
 
   def mutate_response(%Plug.Conn{} = conn) do
     # Mutate your response here
+    IO.inspect "GateName.mutate_response applied to response"
     conn
   end
 end
@@ -62,7 +64,7 @@ Attach gate to multiverse:
 pipeline :api do
   plug :accepts, ["json"]
   plug :put_secure_browser_headers
-  plug :multiverse gates: [
+  plug Multiverse, gates: [
     "2016-07-31": GateName
   ]
 end
