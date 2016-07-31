@@ -24,6 +24,7 @@ defmodule Multiverse.Mixfile do
 
   defp package do
     [contributors: ["Andrew Dryga"],
+     maintainers: ["Andrew Dryga"],
      licenses: ["MIT"],
      links: %{github: "https://github.com/Nebo15/multiverse"},
      files: ~w(lib LICENSE.md mix.exs README.md)]
