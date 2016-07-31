@@ -9,7 +9,9 @@ defmodule Multiverse.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     deps: deps()]
+     deps: deps(),
+     test_coverage: [tool: ExCoveralls],
+     preferred_cli_env: [coveralls: :test]]
   end
 
   def application do
@@ -20,7 +22,8 @@ defmodule Multiverse.Mixfile do
     [{:timex, "~> 3.0"},
      {:cowboy, "~> 1.0"},
      {:plug, "~> 1.0"},
-     {:ex_doc, ">= 0.0.0", only: :dev}]
+     {:excoveralls, "~> 0.5", only: :test},
+     {:ex_doc, ">= 0.0.0", only: :test}]
   end
 
   defp package do
