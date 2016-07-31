@@ -1,5 +1,7 @@
 # Multiverse
 
+[![Deps Status](https://beta.hexfaktor.org/badge/all/github/Nebo15/multiverse.svg)](https://beta.hexfaktor.org/github/Nebo15/multiverse) [![Hex.pm Downloads](https://img.shields.io/hexpm/dw/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![Latest Version](https://img.shields.io/hexpm/v/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![License](https://img.shields.io/hexpm/l/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![Build Status](https://travis-ci.org/Nebo15/multiverse.svg?branch=master)](https://travis-ci.org/Nebo15/multiverse)
+
 This plug helps to manage multiple API versions based on request and response gateways
 
 Inspired by Stripe API.
