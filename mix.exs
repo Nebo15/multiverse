@@ -15,7 +15,7 @@ defmodule Multiverse.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :cowboy, :plug]]
+    [applications: []]
   end
 
   defp deps do
