@@ -82,7 +82,7 @@ You can use any version headers by passing option to Multiverse:
 pipeline :api do
   plug :accepts, ["json"]
   plug :put_secure_browser_headers
-  plug :multiverse gates: [
+  plug Multiverse, gates: [
     "2016-07-31": GateName
   ], version_header: "X-My-API-Version"
 end
@@ -96,7 +96,7 @@ Sometimes clients are sending corrupted version headers, by default Multiverse w
 pipeline :api do
   plug :accepts, ["json"]
   plug :put_secure_browser_headers
-  plug :multiverse gates: [
+  plug Multiverse, gates: [
     "2016-07-31": GateName
   ], error_callback: {ModuleName, :module_method}
 end
