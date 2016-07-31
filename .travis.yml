@@ -7,4 +7,6 @@ otp_release:
 env:
   - MIX_ENV=test
 script:
-  - "mix do deps.get, test, coveralls.travis"
+  - "mix deps.get"
+  - "mix test --trace"
+  - "mix coveralls.travis"
