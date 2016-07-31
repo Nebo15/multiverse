@@ -19,7 +19,8 @@ defmodule Multiverse.Mixfile do
   defp deps do
     [{:timex, "~> 3.0"},
      {:cowboy, "~> 1.0"},
-     {:plug, "~> 1.0"}]
+     {:plug, "~> 1.0"},
+     {:ex_doc, ">= 0.0.0", only: :dev}]
   end
 
   defp package do

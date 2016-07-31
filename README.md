@@ -6,7 +6,7 @@ Inspired by Stripe API.
 
 ## Installation
 
-The package can be installed as:
+The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be installed as:
 
   1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
