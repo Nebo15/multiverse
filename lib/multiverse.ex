@@ -1,14 +1,59 @@
 defmodule MultiverseGate do
   import Plug.Conn
 
-  @doc "Defines request mutator"
+  @moduledoc """
+  Provides behaviour for Multiverse API Gateways.
+
+  ## Examples
+
+      defmodule GateName do
+        @behaviour MultiverseGate
+
+        def mutate_request(%Plug.Conn{} = conn) do
+          # Mutate your request here
+          IO.inspect "GateName.mutate_request applied to request"
+          conn
+        end
+
+        def mutate_response(%Plug.Conn{} = conn) do
+          # Mutate your response here
+          IO.inspect "GateName.mutate_response applied to response"
+          conn
+        end
+      end
+
+  """
+
+  @doc """
+  Defines a request mutator. It accepts %Plug.Conn{} and should return it.
+
+  This function will be called whenever Cowboy receives request.
+  """
   @callback mutate_request(Conn.t) :: Conn.t
 
-  @doc "Defines response mutator"
+  @doc """
+  Defines a response mutator. It accepts %Plug.Conn{} and should return it.
+
+  This function will be called whenever Cowboy sends response to a consumer.
+  """
   @callback mutate_response(Conn.t) :: Conn.t
 end
 
 defmodule Multiverse do
+  @moduledoc """
+  This is a Plug that allows to manage multiple API versions on request/response gateways.
+
+  ## Examples
+
+      pipeline :api do
+        ...
+        plug Multiverse, gates: [
+          "2016-07-31": GateName
+        ], version_header: "x-api-version"
+      end
+
+  """
+
   @behaviour Plug
   @default_version_header "x-api-version"
 
@@ -36,7 +81,8 @@ defmodule Multiverse do
   end
 
   defp assign_client_version(%Plug.Conn{} = conn, version_header, error_callback) do
-    get_req_header(conn, version_header)
+    conn
+    |> get_req_header(version_header)
     |> List.first
     |> normalize_api_version(error_callback)
     |> (&assign(conn, :client_api_version, &1)).()

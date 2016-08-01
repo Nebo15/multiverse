@@ -7,7 +7,7 @@ defmodule MultiverseTest do
 
   @version_header "x-api-version"
 
-  defmodule Gate2016_02_01 do
+  defmodule GateSampleOne do
     @behaviour MultiverseGate
 
     def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
@@ -27,7 +27,7 @@ defmodule MultiverseTest do
     end
   end
 
-  defmodule Gate2016_03_01 do
+  defmodule GateSampleTwo do
     @behaviour MultiverseGate
 
     def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
@@ -153,8 +153,8 @@ defmodule MultiverseTest do
   test "applies request gates", context do
     version = "2016-01-01"
     gates = init([gates: [
-      "2016-02-01": MultiverseTest.Gate2016_02_01,
-      "2016-03-01": MultiverseTest.Gate2016_03_01
+      "2016-02-01": MultiverseTest.GateSampleOne,
+      "2016-03-01": MultiverseTest.GateSampleTwo
     ]])
 
     assert %Plug.Conn{
@@ -172,8 +172,8 @@ defmodule MultiverseTest do
   test "applies response gates", context do
     version = "2016-01-01"
     gates = init([gates: [
-      "2016-03-01": MultiverseTest.Gate2016_03_01,
-      "2016-02-01": MultiverseTest.Gate2016_02_01
+      "2016-03-01": MultiverseTest.GateSampleTwo,
+      "2016-02-01": MultiverseTest.GateSampleOne
     ]])
 
     assert %Plug.Conn{
@@ -195,8 +195,8 @@ defmodule MultiverseTest do
     # DESC order
     version = "2016-01-01"
     gates = init([gates: [
-      "2016-03-01": MultiverseTest.Gate2016_03_01,
-      "2016-02-01": MultiverseTest.Gate2016_02_01
+      "2016-03-01": MultiverseTest.GateSampleTwo,
+      "2016-02-01": MultiverseTest.GateSampleOne
     ]])
 
     conn_desc = context[:conn]
@@ -220,8 +220,8 @@ defmodule MultiverseTest do
 
     # ASC order
     gates = init([gates: [
-      "2016-02-01": MultiverseTest.Gate2016_02_01,
-      "2016-03-01": MultiverseTest.Gate2016_03_01
+      "2016-02-01": MultiverseTest.GateSampleOne,
+      "2016-03-01": MultiverseTest.GateSampleTwo
     ]])
 
     conn_asc = context[:conn]
@@ -247,8 +247,8 @@ defmodule MultiverseTest do
   test "doesn't affect newest clients", context do
     version = "2016-04-01"
     gates = init([gates: [
-      "2016-02-01": MultiverseTest.Gate2016_02_01,
-      "2016-03-01": MultiverseTest.Gate2016_03_01
+      "2016-02-01": MultiverseTest.GateSampleOne,
+      "2016-03-01": MultiverseTest.GateSampleTwo
     ]])
 
     conn = context[:conn]
@@ -274,8 +274,8 @@ defmodule MultiverseTest do
   test "applies only newer versions", context do
     version = "2016-02-02"
     gates = init([gates: [
-      "2016-02-01": MultiverseTest.Gate2016_02_01,
-      "2016-03-01": MultiverseTest.Gate2016_03_01
+      "2016-02-01": MultiverseTest.GateSampleOne,
+      "2016-03-01": MultiverseTest.GateSampleTwo
     ]])
 
     conn = context[:conn]

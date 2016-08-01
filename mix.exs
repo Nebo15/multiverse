@@ -23,7 +23,9 @@ defmodule Multiverse.Mixfile do
      {:cowboy, "~> 1.0"},
      {:plug, "~> 1.0"},
      {:excoveralls, "~> 0.5", only: :test},
-     {:ex_doc, ">= 0.0.0", only: :test}]
+     {:ex_doc, ">= 0.0.0", only: :test},
+     {:dogma, "~> 0.1", only: [:dev, :test]},
+     {:credo, "~> 0.4", only: [:dev, :test]}]
   end
 
   defp package do
