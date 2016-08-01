@@ -117,4 +117,12 @@ end
 
 ## Structuring your tests
 
-TODO: give recommendations on tests.
+1. Split your tests into versions:
+```
+$ ls -l test/acceptance
+total 0
+drwxr-xr-x  2 andrew  staff  68 Aug  1 19:23 GateName
+drwxr-xr-x  2 andrew  staff  68 Aug  1 19:24 OlderGateName
+```
+
+2. Avoid touching request or response in old tests. Create API gates and matching folder in acceptance tests.
