@@ -62,7 +62,7 @@ defmodule Multiverse do
   def init(opts) do
     %{
       gates: opts[:gates] || [],
-      error_callback: opts[:error_callback] || &default_error_callback/1,
+      error_callback: opts[:error_callback] || &default_error_callback/2,
       version_header: opts[:version_header] || @default_version_header
     }
   end
@@ -84,18 +84,18 @@ defmodule Multiverse do
     conn
     |> get_req_header(version_header)
     |> List.first
-    |> normalize_api_version(error_callback)
+    |> normalize_api_version(error_callback, conn)
     |> (&assign(conn, :client_api_version, &1)).()
   end
 
-  defp normalize_api_version(version, _) when is_nil(version) or version == "latest" do
+  defp normalize_api_version(version, _, _) when is_nil(version) or version == "latest" do
     get_latest_version
   end
 
-  defp normalize_api_version(version, error_callback) when is_function(error_callback) do
+  defp normalize_api_version(version, error_callback, %Plug.Conn{} = conn) when is_function(error_callback) do
     case Timex.parse(version, "{YYYY}-{0M}-{0D}") do
       {:error, reason} ->
-        error_callback.(reason)
+        error_callback.(conn, reason)
       {:ok, date} ->
         date
         |> Timex.format("{YYYY}-{0M}-{0D}")
@@ -103,7 +103,7 @@ defmodule Multiverse do
     end
   end
 
-  def default_error_callback(_) do
+  def default_error_callback(_, _) do
     get_latest_version
   end
 

@@ -10,19 +10,11 @@ Inspired by Stripe API.
 
 The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be installed as:
 
-  1. Add `multiverse` to your list of dependencies in `mix.exs`:
+  Add `multiverse` to your list of dependencies in `mix.exs`:
 
     ```elixir
     def deps do
-      [{:multiverse, "~> 0.2.0"}]
-    end
-    ```
-
-  2. Ensure `multiverse` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:multiverse]]
+      [{:multiverse, "~> 0.3.0"}]
     end
     ```
 
@@ -105,7 +97,7 @@ end
 Custom error callback should be a function that returns string:
 
 ```
-def custom_error_callback(reason) do
+def custom_error_callback(%Plug.Conn{} = _conn, reason) do
   IO.inspect reason
   "2015-01-03"
 end
