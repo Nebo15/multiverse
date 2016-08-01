@@ -1,44 +1,3 @@
-defmodule MultiverseGate do
-  import Plug.Conn
-
-  @moduledoc """
-  Provides behaviour for Multiverse API Gateways.
-
-  ## Examples
-
-      defmodule GateName do
-        @behaviour MultiverseGate
-
-        def mutate_request(%Plug.Conn{} = conn) do
-          # Mutate your request here
-          IO.inspect "GateName.mutate_request applied to request"
-          conn
-        end
-
-        def mutate_response(%Plug.Conn{} = conn) do
-          # Mutate your response here
-          IO.inspect "GateName.mutate_response applied to response"
-          conn
-        end
-      end
-
-  """
-
-  @doc """
-  Defines a request mutator. It accepts %Plug.Conn{} and should return it.
-
-  This function will be called whenever Cowboy receives request.
-  """
-  @callback mutate_request(Conn.t) :: Conn.t
-
-  @doc """
-  Defines a response mutator. It accepts %Plug.Conn{} and should return it.
-
-  This function will be called whenever Cowboy sends response to a consumer.
-  """
-  @callback mutate_response(Conn.t) :: Conn.t
-end
-
 defmodule Multiverse do
   @moduledoc """
   This is a Plug that allows to manage multiple API versions on request/response gateways.
@@ -62,11 +21,26 @@ defmodule Multiverse do
     @moduledoc """
       This is a struct that saves Multiverse options.
     """
+    @type gates :: [{String.t(), MultiverseGate}]
+    @type error_callback :: Fun
+    @type version_header :: String.t()
+
+    @type t :: %__MODULE__{
+                gates: gates,
+                error_callback: error_callback,
+                version_header: version_header}
+
     defstruct gates: [],
               error_callback: &Multiverse.default_error_callback/2,
               version_header: "x-api-version"
   end
 
+  @type opts :: [
+            gates: Settings.gates,
+            error_callback: Settings.error_callback,
+            version_header: Settings.version_header]
+
+  @spec init(opts) :: Settings.t
   def init(opts) do
     %Settings{
       gates: opts[:gates],
@@ -76,6 +50,7 @@ defmodule Multiverse do
     |> Map.merge(%Settings{}, fn (_k, curv, defv) -> curv || defv end)
   end
 
+  @spec call(Conn.t, Settings.t) :: Conn.t
   def call(conn, %Settings{gates: [], error_callback: error_callback, version_header: version_header}) do
     conn
     |> assign_client_version(version_header, error_callback)
