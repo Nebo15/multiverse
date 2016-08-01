@@ -14,11 +14,19 @@ Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://am
 
 The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be installed as:
 
-  Add `multiverse` to your list of dependencies in `mix.exs`:
+  1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
     ```elixir
     def deps do
       [{:multiverse, "~> 0.3.0"}]
+    end
+    ```
+
+  2. Make sure that `multiverse` is available at runtime in your production:
+
+    ```elixir
+    def application do
+      [applications: [:multiverse]]
     end
     ```
 
