@@ -32,88 +32,88 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
 ## How to use
 
-Insert this plug into your API pipeline (```router.ex```):
+  1. Insert this plug into your API pipeline (```router.ex```):
 
-```
-pipeline :api do
-  plug :accepts, ["json"]
-  plug :put_secure_browser_headers
-  plug Multiverse
-end
-```
+    ```
+    pipeline :api do
+      plug :accepts, ["json"]
+      plug :put_secure_browser_headers
+      plug Multiverse
+    end
+    ```
 
-Create your first API gateway
+  2. Create your first API gateway
 
-```
-defmodule GateName do
-  @behaviour MultiverseGate
+    ```
+    defmodule GateName do
+      @behaviour MultiverseGate
 
-  def mutate_request(%Plug.Conn{} = conn) do
-    # Mutate your request here
-    IO.inspect "GateName.mutate_request applied to request"
-    conn
-  end
+      def mutate_request(%Plug.Conn{} = conn) do
+        # Mutate your request here
+        IO.inspect "GateName.mutate_request applied to request"
+        conn
+      end
 
-  def mutate_response(%Plug.Conn{} = conn) do
-    # Mutate your response here
-    IO.inspect "GateName.mutate_response applied to response"
-    conn
-  end
-end
-```
+      def mutate_response(%Plug.Conn{} = conn) do
+        # Mutate your response here
+        IO.inspect "GateName.mutate_response applied to response"
+        conn
+      end
+    end
+    ```
 
-Attach gate to multiverse:
+  3. Attach gate to multiverse:
 
-```
-pipeline :api do
-  plug :accepts, ["json"]
-  plug :put_secure_browser_headers
-  plug Multiverse, gates: [
-    "2016-07-31": GateName
-  ]
-end
-```
+    ```
+    pipeline :api do
+      plug :accepts, ["json"]
+      plug :put_secure_browser_headers
+      plug Multiverse, gates: [
+        "2016-07-31": GateName
+      ]
+    end
+    ```
 
-***Notice:*** your API versions should be strings in YYYY-MM-DD format to be appropriately compared to current version.
+  ***Notice:*** your API versions should be strings in YYYY-MM-DD format to be appropriately compared to current version.
 
-Send your API requests with ```X-API-Version``` header with version lower than ```2016-07-31```.
+  4. Send your API requests with ```X-API-Version``` header with version lower than ```2016-07-31```.
 
 ## Custom version header
 
-You can use any version headers by passing option to Multiverse:
+  You can use any version headers by passing option to Multiverse:
 
-```
-pipeline :api do
-  plug :accepts, ["json"]
-  plug :put_secure_browser_headers
-  plug Multiverse, gates: [
-    "2016-07-31": GateName
-  ], version_header: "X-My-API-Version"
-end
-```
+    ```
+    pipeline :api do
+      plug :accepts, ["json"]
+      plug :put_secure_browser_headers
+      plug Multiverse, gates: [
+        "2016-07-31": GateName
+      ], version_header: "X-My-API-Version"
+    end
+    ```
 
 ## Custom error handlers
 
-Sometimes clients are sending corrupted version headers, by default Multiverse will fallback to "latest" version. But you can set your own handler for this situations:
+  Sometimes clients are sending corrupted version headers, by default Multiverse will fallback to "latest" version. But you can set your own handler for this situations:
 
-```
-pipeline :api do
-  plug :accepts, ["json"]
-  plug :put_secure_browser_headers
-  plug Multiverse, gates: [
-    "2016-07-31": GateName
-  ], error_callback: &IO.inspect/1
-end
-```
+    ```
+    pipeline :api do
+      plug :accepts, ["json"]
+      plug :put_secure_browser_headers
+      plug Multiverse, gates: [
+        "2016-07-31": GateName
+      ], error_callback: &IO.inspect/1
+    end
+    ```
 
-Custom error callback should be a function that returns string:
+  Custom error callback should be a function that returns string:
 
-```
-def custom_error_callback(%Plug.Conn{} = _conn, reason) do
-  IO.inspect reason
-  "2015-01-03"
-end
-```
+    ```
+    def custom_error_callback(%Plug.Conn{} = _conn, reason) do
+      IO.inspect reason
+      "2015-01-03"
+    end
+    ```
 
 ## Structuring your tests
 
