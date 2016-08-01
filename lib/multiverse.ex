@@ -35,6 +35,8 @@ defmodule Multiverse do
               version_header: "x-api-version"
   end
 
+  @latest_version_keyword "latest"
+
   @type opts :: [
             gates: Settings.gates,
             error_callback: Settings.error_callback,
@@ -72,7 +74,11 @@ defmodule Multiverse do
     |> (&assign(conn, :client_api_version, &1)).()
   end
 
-  defp normalize_api_version(version, _, _) when is_nil(version) or version == "latest" do
+  defp normalize_api_version(nil, error_callback, %Plug.Conn{} = conn) do
+    error_callback.(conn, "version header is empty")
+  end
+
+  defp normalize_api_version(version, _, _) when version == @latest_version_keyword do
     get_latest_version
   end
 
@@ -87,11 +93,19 @@ defmodule Multiverse do
     end
   end
 
+  @doc """
+  Default error callback, that will be used if no error_callback was specified in options.
+
+  Returns string with a current date in format YYYY-MM-DD.
+  """
   def default_error_callback(_, _) do
     get_latest_version
   end
 
-  defp get_latest_version do
+  @doc """
+  Returns string with a current date in format YYYY-MM-DD.
+  """
+  def get_latest_version do
     Timex.today
     |> Timex.format("{YYYY}-{0M}-{0D}")
     |> elem(1)

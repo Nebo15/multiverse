@@ -63,12 +63,12 @@ defmodule MultiverseTest do
     |> send_resp(200, "body")
   end
 
-  test "defaults to current version", context do
-    version = Timex.today
-    |> Timex.format("{YYYY}-{0M}-{0D}")
-    |> elem(1)
+  test "defaults to error callback version", context do
+    version = custom_error_callback("", "")
 
-    gates = init([])
+    gates = init([
+      error_callback: &custom_error_callback/2
+    ])
 
     assert %Plug.Conn{
       assigns: %{client_api_version: ^version}
@@ -78,9 +78,7 @@ defmodule MultiverseTest do
   end
 
   test "works with damaged versions", context do
-    version = Timex.today
-    |> Timex.format("{YYYY}-{0M}-{0D}")
-    |> elem(1)
+    version = Multiverse.get_latest_version
 
     gates = init([])
 
@@ -124,9 +122,7 @@ defmodule MultiverseTest do
   end
 
   test "allows to bind to latest version", context do
-    version = Timex.today
-    |> Timex.format("{YYYY}-{0M}-{0D}")
-    |> elem(1)
+    version = Multiverse.get_latest_version
     gates = init([])
 
     assert %Plug.Conn{
