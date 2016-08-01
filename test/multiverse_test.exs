@@ -95,7 +95,7 @@ defmodule MultiverseTest do
   test "applies error callback", context do
     version = custom_error_callback("")
     gates = init([
-      error_callback: {MultiverseTest, :custom_error_callback}
+      error_callback: &custom_error_callback/1
     ])
 
     assert %Plug.Conn{

@@ -49,7 +49,7 @@ defmodule Multiverse do
         ...
         plug Multiverse, gates: [
           "2016-07-31": GateName
-        ], version_header: "x-api-version"
+        ], version_header: "x-api-version", error_callback: &custom_error_callback/1
       end
 
   """
@@ -62,7 +62,7 @@ defmodule Multiverse do
   def init(opts) do
     %{
       gates: opts[:gates] || [],
-      error_callback: opts[:error_callback] || {Multiverse, :default_error_callback},
+      error_callback: opts[:error_callback] || &default_error_callback/1,
       version_header: opts[:version_header] || @default_version_header
     }
   end
@@ -92,10 +92,10 @@ defmodule Multiverse do
     get_latest_version
   end
 
-  defp normalize_api_version(version, {error_callback_module, error_callback_method}) do
+  defp normalize_api_version(version, error_callback) when is_function(error_callback) do
     case Timex.parse(version, "{YYYY}-{0M}-{0D}") do
       {:error, reason} ->
-        apply(error_callback_module, error_callback_method, [reason])
+        error_callback.(reason)
       {:ok, date} ->
         date
         |> Timex.format("{YYYY}-{0M}-{0D}")

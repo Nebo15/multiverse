@@ -98,7 +98,16 @@ pipeline :api do
   plug :put_secure_browser_headers
   plug Multiverse, gates: [
     "2016-07-31": GateName
-  ], error_callback: {ModuleName, :module_method}
+  ], error_callback: &IO.inspect/1
+end
+```
+
+Custom error callback should be a function that returns string:
+
+```
+def custom_error_callback(reason) do
+  IO.inspect reason
+  "2015-01-03"
 end
 ```
 
