@@ -2,9 +2,13 @@
 
 [![Deps Status](https://beta.hexfaktor.org/badge/all/github/Nebo15/multiverse.svg)](https://beta.hexfaktor.org/github/Nebo15/multiverse) [![Hex.pm Downloads](https://img.shields.io/hexpm/dw/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![Latest Version](https://img.shields.io/hexpm/v/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![License](https://img.shields.io/hexpm/l/multiverse.svg?maxAge=2592000)](https://hex.pm/packages/multiverse) [![Build Status](https://travis-ci.org/Nebo15/multiverse.svg?branch=master)](https://travis-ci.org/Nebo15/multiverse) [![Coverage Status](https://coveralls.io/repos/github/Nebo15/multiverse/badge.svg?branch=master)](https://coveralls.io/github/Nebo15/multiverse?branch=master)
 
-This plug helps to manage multiple API versions based on request and response gateways
+This plug helps to manage multiple API versions based on request and response gateways. This is an awesome practice to hide your backward compatibility. It allows to have your code in a latest possible version, without duplicating controllers or models.
 
-Inspired by Stripe API.
+Best practice is to store consumer version upon his first request and add a ```error_handler``` that will load if from a storage, and set it for user automatically. So, basically, they won't need to know which version they are using, until they will explicitly set it via request header.
+
+![Compatibility Layers](http://amberonrails.com/images/posts/move-fast-dont-break-your-api/compatibility-layers.png "Compatibility Layers")
+
+Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://amberonrails.com/move-fast-dont-break-your-api/).
 
 ## Installation
 
@@ -106,7 +110,3 @@ end
 ## Structuring your tests
 
 TODO: give recommendations on tests.
-
-## Links
-
-- [MOVE FAST, DON'T BREAK YOUR API](http://amberonrails.com/move-fast-dont-break-your-api/)
