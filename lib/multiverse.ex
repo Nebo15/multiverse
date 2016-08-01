@@ -55,24 +55,33 @@ defmodule Multiverse do
   """
 
   @behaviour Plug
-  @default_version_header "x-api-version"
 
   import Plug.Conn
 
-  def init(opts) do
-    %{
-      gates: opts[:gates] || [],
-      error_callback: opts[:error_callback] || &default_error_callback/2,
-      version_header: opts[:version_header] || @default_version_header
-    }
+  defmodule Settings do
+    @moduledoc """
+      This is a struct that saves Multiverse options.
+    """
+    defstruct gates: [],
+              error_callback: &Multiverse.default_error_callback/2,
+              version_header: "x-api-version"
   end
 
-  def call(conn, %{gates: [], error_callback: error_callback, version_header: version_header}) do
+  def init(opts) do
+    %Settings{
+      gates: opts[:gates],
+      error_callback: opts[:error_callback],
+      version_header: opts[:version_header]
+    }
+    |> Map.merge(%Settings{}, fn (_k, curv, defv) -> curv || defv end)
+  end
+
+  def call(conn, %Settings{gates: [], error_callback: error_callback, version_header: version_header}) do
     conn
     |> assign_client_version(version_header, error_callback)
   end
 
-  def call(conn, %{gates: gates, error_callback: error_callback, version_header: version_header}) do
+  def call(conn, %Settings{gates: gates, error_callback: error_callback, version_header: version_header}) do
     conn
     |> assign_client_version(version_header, error_callback)
     |> assign_active_gates(gates)
