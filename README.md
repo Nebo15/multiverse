@@ -34,7 +34,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   1. Insert this plug into your API pipeline (```router.ex```):
 
-    ```
+    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -44,7 +44,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   2. Create your first API gateway
 
-    ```
+    ```elixir
     defmodule GateName do
       @behaviour MultiverseGate
 
@@ -64,7 +64,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   3. Attach gate to multiverse:
 
-    ```
+    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -82,7 +82,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   You can use any version headers by passing option to Multiverse:
 
-    ```
+    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -96,7 +96,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   Sometimes clients are sending corrupted version headers, by default Multiverse will fallback to "latest" version. But you can set your own handler for this situations:
 
-    ```
+    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -108,7 +108,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   Custom error callback should be a function that returns string:
 
-    ```
+    ```elixir
     def custom_error_callback(%Plug.Conn{} = _conn, reason) do
       IO.inspect reason
       "2015-01-03"
@@ -119,7 +119,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   1. Split your tests into versions:
 
-    ```
+    ```bash
     $ ls -l test/acceptance
     total 0
     drwxr-xr-x  2 andrew  staff  68 Aug  1 19:23 GateName
