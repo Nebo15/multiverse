@@ -1,11 +1,11 @@
 defmodule Multiverse.Mixfile do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.4.1"
 
   def project do
     [app: :multiverse,
-     description: "Manage version of your API via request and response gateways.",
+     description: "Plug that allows to add version compatibility layers via API request/response Gateways.",
      package: package,
      version: @version,
      elixir: "~> 1.3",
