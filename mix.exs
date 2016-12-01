@@ -1,7 +1,7 @@
 defmodule Multiverse.Mixfile do
   use Mix.Project
 
-  @version "0.4.1"
+  @version "0.4.2"
 
   def project do
     [app: :multiverse,
@@ -22,8 +22,8 @@ defmodule Multiverse.Mixfile do
   end
 
   defp deps do
-    [{:timex, "~> 3.0"},
-     {:plug, "~> 1.0"},
+    [{:timex, "~> 3.1"},
+     {:plug, "~> 1.3"},
      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},
      {:excoveralls, "~> 0.5", only: [:dev, :test]},
      {:dogma, "~> 0.1", only: [:dev, :test]},
