@@ -12,10 +12,9 @@ defmodule Multiverse do
       end
 
   """
+  import Plug.Conn
 
   @behaviour Plug
-
-  import Plug.Conn
 
   defmodule Settings do
     @moduledoc """
