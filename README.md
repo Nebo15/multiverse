@@ -18,7 +18,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
     ```elixir
     def deps do
-      [{:multiverse, "~> 0.4.1"}]
+      [{:multiverse, "~> 0.4.2"}]
     end
     ```
 
