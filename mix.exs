@@ -1,12 +1,12 @@
 defmodule Multiverse.Mixfile do
   use Mix.Project
 
-  @version "0.4.2"
+  @version "0.4.3"
 
   def project do
     [app: :multiverse,
      description: "Plug that allows to add version compatibility layers via API request/response Gateways.",
-     package: package,
+     package: package(),
      version: @version,
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
@@ -25,9 +25,9 @@ defmodule Multiverse.Mixfile do
     [{:timex, "~> 3.1"},
      {:plug, "~> 1.3"},
      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},
-     {:excoveralls, "~> 0.5", only: [:dev, :test]},
-     {:dogma, "~> 0.1", only: [:dev, :test]},
-     {:credo, "~> 0.4", only: [:dev, :test]}]
+     {:excoveralls, ">= 0.5.0", only: [:dev, :test]},
+     {:dogma, ">= 0.1.0", only: [:dev, :test]},
+     {:credo, ">= 0.4.0", only: [:dev, :test]}]
   end
 
   defp package do

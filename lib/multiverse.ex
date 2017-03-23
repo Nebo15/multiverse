@@ -12,9 +12,9 @@ defmodule Multiverse do
       end
 
   """
-  import Plug.Conn
-
   @behaviour Plug
+
+  import Plug.Conn
 
   defmodule Settings do
     @moduledoc """
@@ -56,7 +56,6 @@ defmodule Multiverse do
     conn
     |> assign_client_version(version_header, error_callback)
   end
-
   def call(conn, %Settings{gates: gates, error_callback: error_callback, version_header: version_header}) do
     conn
     |> assign_client_version(version_header, error_callback)
@@ -73,14 +72,10 @@ defmodule Multiverse do
     |> (&assign(conn, :client_api_version, &1)).()
   end
 
-  defp normalize_api_version(nil, error_callback, %Plug.Conn{} = conn) do
-    error_callback.(conn, "version header is empty")
-  end
-
-  defp normalize_api_version(version, _, _) when version == @latest_version_keyword do
-    get_latest_version
-  end
-
+  defp normalize_api_version(nil, error_callback, %Plug.Conn{} = conn),
+    do: error_callback.(conn, "version header is empty")
+  defp normalize_api_version(version, _, _) when version == @latest_version_keyword,
+    do: get_latest_version()
   defp normalize_api_version(version, error_callback, %Plug.Conn{} = conn) when is_function(error_callback) do
     case Timex.parse(version, "{YYYY}-{0M}-{0D}") do
       {:error, reason} ->
@@ -97,9 +92,8 @@ defmodule Multiverse do
 
   Returns string with a current date in format YYYY-MM-DD.
   """
-  def default_error_callback(_, _) do
-    get_latest_version
-  end
+  def default_error_callback(_, _),
+    do: get_latest_version()
 
   @doc """
   Returns string with a current date in format YYYY-MM-DD.
@@ -117,9 +111,8 @@ defmodule Multiverse do
   end
 
   # TODO: allow to pass any version comparator to a plug
-  defp version_comparator({gate_version, _}, api_version) do
-    Atom.to_string(gate_version) > api_version
-  end
+  defp version_comparator({gate_version, _}, api_version),
+    do: Atom.to_string(gate_version) > api_version
 
   defp apply_request_gates(%Plug.Conn{assigns: %{active_api_gates: gates}} = conn) do
     gates
@@ -127,9 +120,8 @@ defmodule Multiverse do
     |> Enum.reduce(conn, &apply_request_gate(&1, &2))
   end
 
-  defp apply_request_gate({_, gate_controller}, %Plug.Conn{} = conn) do
-    apply(gate_controller, :mutate_request, [conn])
-  end
+  defp apply_request_gate({_, gate_controller}, %Plug.Conn{} = conn),
+    do: apply(gate_controller, :mutate_request, [conn])
 
   defp apply_response_gates(%Plug.Conn{assigns: %{active_api_gates: gates}} = conn) do
     gates
@@ -137,11 +129,9 @@ defmodule Multiverse do
     |> Enum.reduce(conn, &apply_response_gate(&1, &2))
   end
 
-  defp apply_response_gate({_, gate_controller}, %Plug.Conn{} = conn) do
-    register_before_send(conn, &response_callback(&1, gate_controller))
-  end
+  defp apply_response_gate({_, gate_controller}, %Plug.Conn{} = conn),
+    do: register_before_send(conn, &response_callback(&1, gate_controller))
 
-  defp response_callback(%Plug.Conn{} = conn, gate_controller) do
-    apply(gate_controller, :mutate_response, [conn])
-  end
+  defp response_callback(%Plug.Conn{} = conn, gate_controller),
+    do: apply(gate_controller, :mutate_response, [conn])
 end
