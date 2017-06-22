@@ -16,35 +16,28 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
-    ```elixir
     def deps do
       [{:multiverse, "~> 0.4.3"}]
     end
-    ```
 
   2. Make sure that `multiverse` is available at runtime in your production:
 
-    ```elixir
     def application do
       [applications: [:multiverse]]
     end
-    ```
 
 ## How to use
 
   1. Insert this plug into your API pipeline (```router.ex```):
 
-    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
       plug Multiverse
     end
-    ```
 
   2. Create your first API gateway
 
-    ```elixir
     defmodule GateName do
       @behaviour MultiverseGate
 
@@ -60,11 +53,9 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
         conn
       end
     end
-    ```
 
   3. Attach gate to multiverse:
 
-    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -72,7 +63,6 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
         "2016-07-31": GateName
       ]
     end
-    ```
 
   ***Notice:*** your API versions should be strings in YYYY-MM-DD format to be appropriately compared to current version.
 
@@ -82,7 +72,6 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   You can use any version headers by passing option to Multiverse:
 
-    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -90,13 +79,11 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
         "2016-07-31": GateName
       ], version_header: "X-My-API-Version"
     end
-    ```
 
 ## Custom error handlers
 
   Sometimes clients are sending corrupted version headers, by default Multiverse will fallback to "latest" version. But you can set your own handler for this situations:
 
-    ```elixir
     pipeline :api do
       plug :accepts, ["json"]
       plug :put_secure_browser_headers
@@ -104,26 +91,21 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
         "2016-07-31": GateName
       ], error_callback: &IO.inspect/1
     end
-    ```
 
   Custom error callback should be a function that returns string:
 
-    ```elixir
     def custom_error_callback(%Plug.Conn{} = _conn, reason) do
       IO.inspect reason
       "2015-01-03"
     end
-    ```
 
 ## Structuring your tests
 
   1. Split your tests into versions:
 
-    ```bash
     $ ls -l test/acceptance
     total 0
     drwxr-xr-x  2 andrew  staff  68 Aug  1 19:23 GateName
     drwxr-xr-x  2 andrew  staff  68 Aug  1 19:24 OlderGateName
-    ```
 
   2. Avoid touching request or response in old tests. Create API gates and matching folder in acceptance tests.
