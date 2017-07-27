@@ -1,4 +1,4 @@
-defmodule MultiverseGate do
+defmodule Multiverse.Gate do
   @moduledoc """
   Provides behaviour for Multiverse API Gateways.
 
@@ -27,12 +27,12 @@ defmodule MultiverseGate do
 
   This function will be called whenever Cowboy receives request.
   """
-  @callback mutate_request(Conn.t) :: Conn.t
+  @callback mutate_request(Plug.Conn.t) :: Plug.Conn.t
 
   @doc """
   Defines a response mutator.
 
   This function will be called whenever Cowboy sends response to a consumer.
   """
-  @callback mutate_response(Conn.t) :: Conn.t
+  @callback mutate_response(Plug.Conn.t) :: Plug.Conn.t
 end

@@ -17,7 +17,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
     def deps do
-      [{:multiverse, "~> 0.4.3"}]
+      [{:multiverse, "~> 0.5.0"}]
     end
 
   2. Make sure that `multiverse` is available at runtime in your production:
@@ -39,7 +39,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   2. Create your first API gateway
 
     defmodule GateName do
-      @behaviour MultiverseGate
+      @behaviour Multiverse.Gate
 
       def mutate_request(%Plug.Conn{} = conn) do
         # Mutate your request here

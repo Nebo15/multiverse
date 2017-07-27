@@ -1,8 +1,8 @@
 defmodule Multiverse do
   @moduledoc """
-  This is a Plug that allows to manage multiple API versions on request/response gateways.
+  This is a Plug that allows to manage multiple API versions via API gateways.
 
-  ## Examples
+  ## Example Usage
 
       pipeline :api do
         ...
@@ -18,9 +18,9 @@ defmodule Multiverse do
 
   defmodule Settings do
     @moduledoc """
-      This is a struct that saves Multiverse options.
+    This is a struct that saves Multiverse options.
     """
-    @type gates :: [{String.t(), MultiverseGate}]
+    @type gates :: [{String.t(), module()}]
     @type error_callback :: Fun
     @type version_header :: String.t()
 
@@ -51,7 +51,7 @@ defmodule Multiverse do
     |> Map.merge(%Settings{}, fn (_k, curv, defv) -> curv || defv end)
   end
 
-  @spec call(Conn.t, Settings.t) :: Conn.t
+  @spec call(Plug.Conn.t, Settings.t) :: Plug.Conn.t
   def call(conn, %Settings{gates: [], error_callback: error_callback, version_header: version_header}) do
     conn
     |> assign_client_version(version_header, error_callback)
@@ -60,8 +60,8 @@ defmodule Multiverse do
     conn
     |> assign_client_version(version_header, error_callback)
     |> assign_active_gates(gates)
-    |> apply_request_gates
-    |> apply_response_gates
+    |> apply_request_gates()
+    |> apply_response_gates()
   end
 
   defp assign_client_version(%Plug.Conn{} = conn, version_header, error_callback) do
@@ -77,13 +77,11 @@ defmodule Multiverse do
   defp normalize_api_version(version, _, _) when version == @latest_version_keyword,
     do: get_latest_version()
   defp normalize_api_version(version, error_callback, %Plug.Conn{} = conn) when is_function(error_callback) do
-    case Timex.parse(version, "{YYYY}-{0M}-{0D}") do
+    case Date.from_iso8601(version) do
       {:error, reason} ->
         error_callback.(conn, reason)
       {:ok, date} ->
-        date
-        |> Timex.format("{YYYY}-{0M}-{0D}")
-        |> elem(1)
+        Date.to_string(date)
     end
   end
 
@@ -98,11 +96,8 @@ defmodule Multiverse do
   @doc """
   Returns string with a current date in format YYYY-MM-DD.
   """
-  def get_latest_version do
-    Timex.today
-    |> Timex.format("{YYYY}-{0M}-{0D}")
-    |> elem(1)
-  end
+  def get_latest_version,
+    do: Date.to_string(Date.utc_today())
 
   defp assign_active_gates(%Plug.Conn{assigns: %{client_api_version: version}} = conn, gates) do
     gates

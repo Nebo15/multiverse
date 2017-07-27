@@ -8,7 +8,7 @@ defmodule MultiverseTest do
   @version_header "x-api-version"
 
   defmodule GateSampleOne do
-    @behaviour MultiverseGate
+    @behaviour Multiverse.Gate
 
     def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
       q = query_params
@@ -28,7 +28,7 @@ defmodule MultiverseTest do
   end
 
   defmodule GateSampleTwo do
-    @behaviour MultiverseGate
+    @behaviour Multiverse.Gate
 
     def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
       q = query_params
