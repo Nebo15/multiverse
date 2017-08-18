@@ -8,7 +8,7 @@ Best practice is to store consumer version upon his first request and add a ```e
 
 ![Compatibility Layers](http://amberonrails.com/images/posts/move-fast-dont-break-your-api/compatibility-layers.png "Compatibility Layers")
 
-Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://amberonrails.com/move-fast-dont-break-your-api/).
+Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://amberonrails.com/move-fast-dont-break-your-api/) or [API versioning](https://stripe.com/blog/api-versioning).
 
 ## Installation
 
