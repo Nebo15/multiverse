@@ -17,7 +17,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
     def deps do
-      [{:multiverse, "~> 0.5.0"}]
+      [{:multiverse, "~> 0.5.1"}]
     end
 
   2. Make sure that `multiverse` is available at runtime in your production:
