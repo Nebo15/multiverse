@@ -4,11 +4,35 @@
 
 This plug helps to manage multiple API versions based on request and response gateways. This is an awesome practice to hide your backward compatibility. It allows to have your code in a latest possible version, without duplicating controllers or models.
 
-Best practice is to store consumer version upon his first request and add a ```error_handler``` that will load if from a storage, and set it for user automatically. So, basically, they won't need to know which version they are using, until they will explicitly set it via request header.
-
 ![Compatibility Layers](http://amberonrails.com/images/posts/move-fast-dont-break-your-api/compatibility-layers.png "Compatibility Layers")
 
 Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://amberonrails.com/move-fast-dont-break-your-api/) or [API versioning](https://stripe.com/blog/api-versioning).
+
+## Goals
+
+  - reduce changes required to support multiple API versions;
+  - provide a way to test and schedule API version releases;
+  - to have minimum dependencies and low performance hit;
+  - to be flexible enough for most of projects to adopt it.
+
+## Adapters
+
+Multiverse allows you to use a custom adapter which can, for eg.:
+
+  - store consumer version upon his first request and re-use it as default each time consumer is using your API, eliminating need of passing version headers for them. Change this version when consumer has explicitly set it;
+  - use _other than ISO date_ version types, eg. incremental counters (`v1`, `v2`);
+  - handle malformed versions by responding with JSON errors.
+
+Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the current date.
+
+Alsop, it allows to use channel name instead of date, where:
+
+  - `latest` channel would fallback to the current date;
+  - `edge` channel would disable all changes altogether.
+
+Channels allow you to plan version releases upfront and test them without affecting users,
+just set future date for a change and pass it explicitly or use `edge` channel to test latest
+application version.
 
 ## Installation
 
@@ -16,88 +40,101 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   1. Add `multiverse` to your list of dependencies in `mix.exs`:
 
-    def deps do
-      [{:multiverse, "~> 0.5.1"}]
-    end
+  ```elixir
+  def deps do
+    [{:multiverse, "~> 1.0.0"}]
+  end
+  ```
 
   2. Make sure that `multiverse` is available at runtime in your production:
 
-    def application do
-      [applications: [:multiverse]]
-    end
+  ```elixir
+  def application do
+    [applications: [:multiverse]]
+  end
+  ```
 
 ## How to use
 
-  1. Insert this plug into your API pipeline (```router.ex```):
+  1. Insert this plug into your API pipeline (in your ```router.ex```):
 
-    pipeline :api do
-      plug :accepts, ["json"]
-      plug :put_secure_browser_headers
-      plug Multiverse
+  ```elixir
+  pipeline :api do
+    plug :accepts, ["json"]
+    plug :put_secure_browser_headers
+
+    plug Multiverse
+  end
+  ```
+
+  2. Define module that handles change
+
+  ```elixir
+  defmodule AccountTypeChange do
+    @behaviour Multiverse.Change
+
+    def mutate_request(%Plug.Conn{} = conn) do
+      # Mutate your request here
+      IO.inspect "AccountTypeChange.mutate_request applied to request"
+      conn
     end
 
-  2. Create your first API gateway
-
-    defmodule GateName do
-      @behaviour Multiverse.Gate
-
-      def mutate_request(%Plug.Conn{} = conn) do
-        # Mutate your request here
-        IO.inspect "GateName.mutate_request applied to request"
-        conn
-      end
-
-      def mutate_response(%Plug.Conn{} = conn) do
-        # Mutate your response here
-        IO.inspect "GateName.mutate_response applied to response"
-        conn
-      end
+    def mutate_response(%Plug.Conn{} = conn) do
+      # Mutate your response here
+      IO.inspect "AccountTypeChange.mutate_response applied to response"
+      conn
     end
+  end
+  ```
 
-  3. Attach gate to multiverse:
+  3. Enable the change:
 
-    pipeline :api do
-      plug :accepts, ["json"]
-      plug :put_secure_browser_headers
-      plug Multiverse, gates: [
-        "2016-07-31": GateName
-      ]
-    end
+  ```elixir
+  pipeline :api do
+    plug :accepts, ["json"]
+    plug :put_secure_browser_headers
 
-  ***Notice:*** your API versions should be strings in YYYY-MM-DD format to be appropriately compared to current version.
+    plug Multiverse, gates: %{
+      ~D[2016-07-21] => [AccountTypeChange]
+    }
+  end
+  ```
 
-  4. Send your API requests with ```X-API-Version``` header with version lower than ```2016-07-31```.
+  4. Send your API requests with ```X-API-Version``` header with version lower or equal to ```2016-07-21```.
 
-## Custom version header
+### Overriding version header
 
   You can use any version headers by passing option to Multiverse:
 
-    pipeline :api do
-      plug :accepts, ["json"]
-      plug :put_secure_browser_headers
-      plug Multiverse, gates: [
-        "2016-07-31": GateName
-      ], version_header: "X-My-API-Version"
-    end
+  ```elixir
+  pipeline :api do
+    plug :accepts, ["json"]
+    plug :put_secure_browser_headers
 
-## Custom error handlers
+    plug Multiverse,
+      version_header: "x-my-version-header",
+      gates: %{
+        ~D[2016-07-21] => [AccountTypeChange]
+      }
+  end
+  ```
 
-  Sometimes clients are sending corrupted version headers, by default Multiverse will fallback to "latest" version. But you can set your own handler for this situations:
+### Using custom adapters
 
-    pipeline :api do
-      plug :accepts, ["json"]
-      plug :put_secure_browser_headers
-      plug Multiverse, gates: [
-        "2016-07-31": GateName
-      ], error_callback: &IO.inspect/1
-    end
+  You can use your own adapter which implements `Multiverse.Adapter` behaviour:
 
-  Custom error callback should be a function that returns string:
+  ```elixir
+  pipeline :api do
+    plug :accepts, ["json"]
+    plug :put_secure_browser_headers
 
-    def custom_error_callback(%Plug.Conn{} = _conn, reason) do
-      IO.inspect reason
-      "2015-01-03"
-    end
+    plug Multiverse,
+      adapter: MyApp.SmartMultiverseAdapter,
+      gates: %{
+        ~D[2016-07-21] => [AccountTypeChange]
+      }
+  end
+  ```
 
 ## Structuring your tests
 
@@ -105,7 +142,32 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
     $ ls -l test/acceptance
     total 0
-    drwxr-xr-x  2 andrew  staff  68 Aug  1 19:23 GateName
-    drwxr-xr-x  2 andrew  staff  68 Aug  1 19:24 OlderGateName
+    drwxr-xr-x  2 andrew  staff  68 Aug  1 19:23 AccountTypeChange
+    drwxr-xr-x  2 andrew  staff  68 Aug  1 19:24 OlderChange
 
   2. Avoid touching request or response in old tests. Create API gates and matching folder in acceptance tests.
+
+## Other things you might want to do
+
+1. Store Multiverse configuration in `config.ex`:
+
+  ```elixir
+  use Mix.Config
+
+  config :multiverse, MyApp.Endpoint,
+    gates: %{
+      ~D[2016-07-21] => [AccountTypeChange]
+    }
+  ```
+
+  ```elixir
+  plug Multiverse, endpoint: __MODULE__
+  ```
+
+2. Generate API documentation from changes `@moduledoc`'s.
+
+3. Other awesome stuff. Open an issue and tell me about it! :).
+
+# License
+
+See [LICENSE.md](LICENSE.md).

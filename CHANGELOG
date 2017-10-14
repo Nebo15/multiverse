@@ -1,0 +1,5 @@
+# Changelog for v1.0
+
+Multiverse is completely redesigned to work on top of adapters.
+
+Default adapter is `Multiverse.Adapters.ISODate` which works similarly to the old Multiverse behaviour.

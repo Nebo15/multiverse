@@ -1,14 +1,14 @@
 defmodule Multiverse.Mixfile do
   use Mix.Project
 
-  @version "0.5.1"
+  @version "1.0.0"
 
   def project do
     [app: :multiverse,
      description: "Plug that allows to add version compatibility layers via API request/response gateways.",
      package: package(),
      version: @version,
-     elixir: "~> 1.4",
+     elixir: "~> 1.5",
      elixirc_paths: elixirc_paths(Mix.env()),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,

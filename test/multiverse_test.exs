@@ -1,317 +1,235 @@
 defmodule MultiverseTest do
   use ExUnit.Case, async: true
   use Plug.Test
-  import Multiverse
-
   doctest Multiverse
 
-  @version_header "x-api-version"
+  use ExUnit.Case, async: true
+  use Plug.Test
 
-  defmodule GateSampleOne do
-    @behaviour Multiverse.Gate
-
-    def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
-      q = query_params
-      |> Map.put("gate1_request_applied", true)
-      |> Map.put("step", 1)
-
-      %{conn | query_params: q}
-    end
-
-    def mutate_response(%Plug.Conn{query_params: query_params} = conn) do
-      q = query_params
-      |> Map.put("gate1_response_applied", true)
-      |> Map.put("step", 4)
-
-      %{conn | query_params: q}
-    end
+  defmodule ChangeOne do
+    use ChangeFactory
   end
 
-  defmodule GateSampleTwo do
-    @behaviour Multiverse.Gate
+  defmodule ChangeTwo do
+    use ChangeFactory
+  end
 
-    def mutate_request(%Plug.Conn{query_params: query_params} = conn) do
-      q = query_params
-      |> Map.put("gate2_request_applied", true)
-      |> Map.put("step", 2)
+  defmodule ChangeThree do
+    use ChangeFactory
+  end
 
-      %{conn | query_params: q}
-    end
+  defmodule ChangeFour do
+    use ChangeFactory
+  end
 
-    def mutate_response(%Plug.Conn{query_params: query_params} = conn) do
-      q = query_params
-      |> Map.put("gate2_response_applied", true)
-      |> Map.put("step", 3)
-
-      %{conn | query_params: q}
-    end
+  defmodule MissbehavingAdapter do
+    def init(_adapter, _opts),
+      do: :error
   end
 
   setup do
-    [conn: conn(:get, "/foo")]
+    %{conn: conn(:get, "/foo")}
   end
 
-  test "return connection without gates", context do
-    version = "2016-01-01"
-    gates = init([])
+  describe "init/1" do
+    test "raises when adapter is not loaded" do
+      assert_raise ArgumentError, ~r/NotLoadedAdapter was not compiled/, fn ->
+        Multiverse.init(adapter: NotLoadedAdapter)
+      end
+    end
 
-    assert %Plug.Conn{
-      req_headers: [{"x-api-version", ^version}]
-    } = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-    |> send_resp(200, "body")
+    test "raises when adapter can not be initialized not loaded" do
+      assert_raise ArgumentError, ~r/Can not initialize MultiverseTest.MissbehavingAdapter/, fn ->
+        Multiverse.init(adapter: MissbehavingAdapter)
+      end
+    end
+
+    test "falls back to default adapter" do
+      %{adapter: Multiverse.Adapters.ISODate} = Multiverse.init([])
+    end
+
+    test "falls back to default version header" do
+      %{version_header: "x-api-version"} = Multiverse.init([])
+    end
+
+    test "allows to override version header" do
+      %{version_header: "custom-version-header"} = Multiverse.init([version_header: "custom-version-header"])
+    end
+
+    test "raises when change is not loaded" do
+      assert_raise ArgumentError, ~r/NotLoadedChange was not compiled/, fn ->
+        Multiverse.init(gates: %{
+          ~D[2001-01-01] => [NotLoadedChange]
+        })
+      end
+    end
+
+    test "resolves options from application environment" do
+      env = [
+        adapter: Multiverse.Adapters.ISODate,
+        gates: %{~D[2001-01-01] => [ChangeOne]},
+        version_header: "custom-version-header"
+      ]
+      Application.put_env(:multiverse, MyEndpoint, env)
+
+      assert Multiverse.init(endpoint: MyEndpoint) ==
+        %{
+          version_header: "custom-version-header",
+          gates: %{~D[2001-01-01] => [ChangeOne]},
+          adapter: Multiverse.Adapters.ISODate,
+        }
+
+      Application.put_env(:multiverse, MyEndpoint, [adapter: MyAdapter])
+      assert_raise ArgumentError, ~r/MyAdapter was not compiled/, fn ->
+        Multiverse.init(endpoint: MyEndpoint)
+      end
+    end
   end
 
-  test "defaults to error callback version", context do
-    version = custom_error_callback("", "")
+  describe "call/2" do
+    test "works with default options", %{conn: conn} do
+      opts = Multiverse.init([])
+      conn = Multiverse.call(conn, opts)
 
-    gates = init([
-      error_callback: &custom_error_callback/2
-    ])
+      assert conn.assigns == %{}
+      assert conn.before_send == []
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version}
-    } = context[:conn]
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
+      # Stores %Multiverse.VersionSchema{} in conn.private
+      assert conn.private.multiverse_version_schema ==
+        %Multiverse.VersionSchema{changes: [], adapter: Multiverse.Adapters.ISODate, version: Date.utc_today()}
+    end
 
-  test "works with damaged versions", context do
-    version = Multiverse.get_latest_version
+    test "handles empty gates", %{conn: conn} do
+      opts = %{adapter: Multiverse.Adapters.ISODate, gates: %{}, version_header: "x-api-version"}
+      conn = Multiverse.call(conn, opts)
+      assert conn.assigns == %{}
+      assert conn.before_send == []
+    end
 
-    gates = init([])
+    test "resolves empty version to current gate", %{conn: conn} do
+      opts = %{adapter: Multiverse.Adapters.ISODate, gates: %{}, version_header: "x-api-version"}
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version}
-    } = context[:conn]
-    |> insert_version_header("BADDATE")
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
+      conn = %{conn | req_headers: [{"x-api-version", ""}]}
+      conn = Multiverse.call(conn, opts)
 
-  test "applies error callback", context do
-    version = custom_error_callback("", "")
-    gates = init([
-      error_callback: &custom_error_callback/2
-    ])
+      assert conn.private.multiverse_version_schema.version == Date.utc_today()
+    end
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version}
-    } = context[:conn]
-    |> insert_version_header("BADDATE")
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
-
-  test "works with custom version header", context do
-    version = "2016-01-01"
-    gates = init([
-      version_header: "x-custom-header"
-    ])
-
-    %{req_headers: req_headers} = context[:conn]
-    conn = %Plug.Conn{context[:conn] | req_headers: [{"x-custom-header", version} | req_headers]}
-
-    assert %Plug.Conn{
-      req_headers: [{"x-custom-header", ^version}],
-      assigns: %{client_api_version: ^version}
-    } = conn
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
-
-  test "allows to bind to latest version", context do
-    version = Multiverse.get_latest_version
-    gates = init([])
-
-    assert %Plug.Conn{
-      req_headers: [{"x-api-version", "latest"}],
-      assigns: %{client_api_version: ^version}
-    } = context[:conn]
-    |> insert_version_header("latest")
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
-
-  test "assigns client api version", context do
-    version = "2016-01-01"
-    gates = init([])
-
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version}
-    } = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
-
-  test "applies request gates", context do
-    version = "2016-01-01"
-    gates = init([gates: [
-      "2016-02-01": MultiverseTest.GateSampleOne,
-      "2016-03-01": MultiverseTest.GateSampleTwo
-    ]])
-
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "gate2_request_applied" => true,
-        "gate1_request_applied" => true,
-        "step" => 2
+    test "applies changes in correct order", %{conn: conn} do
+      opts = %{
+        adapter: Multiverse.Adapters.ISODate,
+        gates: %{
+          ~D[2001-02-01] => [ChangeOne, ChangeTwo],
+          ~D[2002-03-01] => [ChangeThree],
+        },
+        version_header: "x-api-version"
       }
-    } = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-  end
 
-  test "applies response gates", context do
-    version = "2016-01-01"
-    gates = init([gates: [
-      "2016-03-01": MultiverseTest.GateSampleTwo,
-      "2016-02-01": MultiverseTest.GateSampleOne
-    ]])
+      conn = %{conn | req_headers: [{"x-api-version", "2001-01-01"}]}
+      conn =
+        conn
+        |> Multiverse.call(opts)
+        |> send_resp(204, "")
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "gate2_request_applied" => true,
-        "gate1_request_applied" => true,
-        "gate2_response_applied" => true,
-        "gate1_response_applied" => true,
-        "step" => 4
+      assert length(conn.private.multiverse_version_schema.changes) == 3
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
+
+      assert conn.assigns.applied_changes ==
+        [
+          :"Elixir.MultiverseTest.ChangeOne.handle_request",
+          :"Elixir.MultiverseTest.ChangeTwo.handle_request",
+          :"Elixir.MultiverseTest.ChangeThree.handle_request",
+          :"Elixir.MultiverseTest.ChangeThree.handle_response",
+          :"Elixir.MultiverseTest.ChangeTwo.handle_response",
+          :"Elixir.MultiverseTest.ChangeOne.handle_response",
+        ]
+
+      assert length(conn.before_send) == 3
+    end
+
+    test "applies specified date changes", %{conn: conn} do
+      opts = %{
+        adapter: Multiverse.Adapters.ISODate,
+        gates: %{
+          ~D[2001-02-01] => [ChangeOne, ChangeTwo],
+          ~D[2002-03-01] => [ChangeThree],
+        },
+        version_header: "x-api-version"
       }
-    } = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-    |> send_resp(200, "body")
-  end
 
-  test "applies gates in correct order", context do
-    # DESC order
-    version = "2016-01-01"
-    gates = init([gates: [
-      "2016-03-01": MultiverseTest.GateSampleTwo,
-      "2016-02-01": MultiverseTest.GateSampleOne
-    ]])
+      conn = %{conn | req_headers: [{"x-api-version", "2001-02-01"}]}
+      conn =
+        conn
+        |> Multiverse.call(opts)
+        |> send_resp(204, "")
 
-    conn_desc = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "step" => 2
+      assert conn.assigns.applied_changes ==
+        [
+          :"Elixir.MultiverseTest.ChangeOne.handle_request",
+          :"Elixir.MultiverseTest.ChangeTwo.handle_request",
+          :"Elixir.MultiverseTest.ChangeThree.handle_request",
+          :"Elixir.MultiverseTest.ChangeThree.handle_response",
+          :"Elixir.MultiverseTest.ChangeTwo.handle_response",
+          :"Elixir.MultiverseTest.ChangeOne.handle_response",
+        ]
+
+      assert length(conn.before_send) == 3
+    end
+
+    test "ignores older changes", %{conn: conn} do
+      opts = %{
+        adapter: Multiverse.Adapters.ISODate,
+        gates: %{
+          ~D[2001-02-01] => [ChangeOne, ChangeTwo],
+          ~D[2002-03-01] => [ChangeThree],
+        },
+        version_header: "x-api-version"
       }
-    } = conn_desc
 
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "step" => 4
+      conn = %{conn | req_headers: [{"x-api-version", "2001-02-02"}]}
+      conn =
+        conn
+        |> Multiverse.call(opts)
+        |> send_resp(204, "")
+
+      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
+      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
+
+      assert conn.assigns.applied_changes ==
+        [
+          :"Elixir.MultiverseTest.ChangeThree.handle_request",
+          :"Elixir.MultiverseTest.ChangeThree.handle_response",
+        ]
+
+      assert length(conn.before_send) == 1
+    end
+
+    test "does not affect edge consumers", %{conn: conn} do
+      opts = %{
+        adapter: Multiverse.Adapters.ISODate,
+        gates: %{
+          ~D[2001-02-01] => [ChangeOne, ChangeTwo],
+          ~D[2002-03-01] => [ChangeThree],
+        },
+        version_header: "x-api-version"
       }
-    } = conn_desc
-    |> send_resp(200, "body")
 
-    # ASC order
-    gates = init([gates: [
-      "2016-02-01": MultiverseTest.GateSampleOne,
-      "2016-03-01": MultiverseTest.GateSampleTwo
-    ]])
+      conn = %{conn | req_headers: [{"x-api-version", "edge"}]}
+      conn =
+        conn
+        |> Multiverse.call(opts)
+        |> send_resp(204, "")
 
-    conn_asc = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "step" => 2
-      }
-    } = conn_asc
-
-    assert %Plug.Conn{
-      assigns: %{client_api_version: ^version},
-      query_params: %{
-        "step" => 4
-      }
-    } = conn_asc
-    |> send_resp(200, "body")
-  end
-
-  test "doesn't affect newest clients", context do
-    version = "2016-04-01"
-    gates = init([gates: [
-      "2016-02-01": MultiverseTest.GateSampleOne,
-      "2016-03-01": MultiverseTest.GateSampleTwo
-    ]])
-
-    conn = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-    |> send_resp(200, "body")
-
-    assert %Plug.Conn{
-      assigns: %{
-        client_api_version: ^version,
-        active_api_gates: []
-      },
-      query_params: query_params
-    } = conn
-
-    refute Map.has_key?(query_params, "step")
-    refute Map.has_key?(query_params, "gate1_request_applied")
-    refute Map.has_key?(query_params, "gate1_response_applied")
-    refute Map.has_key?(query_params, "gate2_request_applied")
-    refute Map.has_key?(query_params, "gate2_response_applied")
-  end
-
-  test "applies only newer versions", context do
-    version = "2016-02-02"
-    gates = init([gates: [
-      "2016-02-01": MultiverseTest.GateSampleOne,
-      "2016-03-01": MultiverseTest.GateSampleTwo
-    ]])
-
-    conn = context[:conn]
-    |> insert_version_header(version)
-    |> call(gates)
-
-    assert %Plug.Conn{
-      assigns: %{
-        client_api_version: ^version,
-      },
-      query_params: %{
-        "gate2_request_applied" => true,
-        "step" => 2
-      } = query_params
-    } = conn
-
-    refute Map.has_key?(query_params, "gate1_request_applied")
-    refute Map.has_key?(query_params, "gate1_response_applied")
-
-    assert %Plug.Conn{
-      assigns: %{
-        client_api_version: ^version,
-      },
-      query_params: %{
-        "gate2_request_applied" => true,
-        "gate2_response_applied" => true,
-        "step" => 3
-      } = query_params
-    } = conn
-    |> send_resp(200, "body")
-
-    refute Map.has_key?(query_params, "gate1_request_applied")
-    refute Map.has_key?(query_params, "gate1_response_applied")
-  end
-
-  defp insert_version_header(%Plug.Conn{req_headers: req_headers} = conn, version) do
-    %Plug.Conn{conn | req_headers: [{@version_header, version} | req_headers]}
-  end
-
-  def custom_error_callback(_, _) do
-    "custom_default_value"
+      assert conn.private.multiverse_version_schema.changes == []
+      refute Map.get(conn.assigns, :applied_changes)
+      assert conn.before_send == []
+    end
   end
 end
