@@ -8,6 +8,12 @@ defmodule Multiverse do
   """
   @behaviour Plug
 
+  @type config :: %{
+    adapter: module,
+    version_header: String.t,
+    gates: Multiverse.Adapter.gates
+  }
+
   defmodule VersionSchema do
     @moduledoc """
     This module defines schema that is assigned to `conn.private[:multiverse_version_schema]`
@@ -32,11 +38,12 @@ defmodule Multiverse do
   Raises at compile time when adapter or change is not loaded.
 
   Available options:
+    * `:endpoint` - endpoint which is used to fetch configuration from application environment;
     * `:adapter` - module which implements `Multiverse.Adapter` behaviour;
     * `:version_header` - header which is used to fetch consumer version;
     * `:gates` - list of gates (and changes) that are available for consumers.
   """
-  @spec init(Keyword.t) :: Map.t
+  @spec init(opts :: Keyword.t) :: config
   def init(opts) do
     endpoint = Keyword.get(opts, :endpoint)
     opts =
@@ -80,9 +87,9 @@ defmodule Multiverse do
     |> Enum.into(%{})
   end
 
-  @spec call(conn :: Plug.Conn.t, opts :: Map.t) :: Plug.Conn.t
-  def call(conn, opts) do
-    %{adapter: adapter, version_header: version_header, gates: gates} = opts
+  @spec call(conn :: Plug.Conn.t, config :: config) :: Plug.Conn.t
+  def call(conn, config) do
+    %{adapter: adapter, version_header: version_header, gates: gates} = config
     {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
     version_changes = changes_for_version(adapter, consumer_api_version, gates)
     version_schema =

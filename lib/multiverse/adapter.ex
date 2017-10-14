@@ -52,7 +52,7 @@ defmodule Multiverse.Adapter do
 
   @doc false
   # Resolves adapter configuration at compile time
-  @spec compile_config!(adapter :: module, opts :: Keyword.t) :: {:ok, Keyword.t}
+  @spec compile_config!(adapter :: module, opts :: Keyword.t) :: Keyword.t
   def compile_config!(adapter, opts) do
     unless Code.ensure_loaded?(adapter) do
       raise ArgumentError, "adapter #{inspect(adapter)} was not compiled, " <>

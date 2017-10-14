@@ -1,0 +1,2 @@
+lib/multiverse.ex:70: Expression produces a value of type [any()], but this value is unmatched
+lib/multiverse.ex:46: Invalid type specification for function 'Elixir.Multiverse':init/1. The success typing is ([{atom(),_}]) -> #{'adapter':=atom(), 'gates':=map(), 'version_header':=_}

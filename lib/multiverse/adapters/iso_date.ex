@@ -25,7 +25,7 @@ defmodule Multiverse.Adapters.ISODate do
   def version_comparator(v1, v2),
     do: Date.compare(v1, v2) != :gt
 
-  @spec fetch_default_version(conn :: Plug.Conn.t) :: {:ok, version}
+  @spec fetch_default_version(conn :: Plug.Conn.t) :: {:ok, version, Plug.Conn.t}
   def fetch_default_version(conn),
     do: {:ok, Date.utc_today(), conn}
 
@@ -41,7 +41,7 @@ defmodule Multiverse.Adapters.ISODate do
         {:ok, date, conn}
 
       {:error, reason} ->
-        Logger.warn("Malformed version header: `#{inspect(reason)}`, failing back to the default version")
+        :ok = Logger.warn("Malformed version header: `#{inspect(reason)}`, failing back to the default version")
         fetch_default_version(conn)
     end
   end
