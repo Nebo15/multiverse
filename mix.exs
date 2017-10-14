@@ -5,10 +5,11 @@ defmodule Multiverse.Mixfile do
 
   def project do
     [app: :multiverse,
-     description: "Plug that allows to add version compatibility layers via API request/response Gateways.",
+     description: "Plug that allows to add version compatibility layers via API request/response gateways.",
      package: package(),
      version: @version,
      elixir: "~> 1.4",
+     elixirc_paths: elixirc_paths(Mix.env()),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
@@ -16,6 +17,11 @@ defmodule Multiverse.Mixfile do
      preferred_cli_env: [coveralls: :test],
      docs: [source_ref: "v#{@version}", main: "readme", extras: ["README.md"]]]
   end
+
+  defp elixirc_paths(:test),
+    do: elixirc_paths(:dev) ++ ["test/support"]
+  defp elixirc_paths(_),
+    do: ["lib"]
 
   def application do
     [extra_applications: [:plug]]
