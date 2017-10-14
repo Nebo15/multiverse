@@ -28,7 +28,7 @@ defmodule Multiverse.Mixfile do
   end
 
   defp deps do
-    [{:plug, "~> 1.3"},
+    [{:plug, "~> 1.4"},
      {:ex_doc, ">= 0.0.0", only: [:dev, :test]},
      {:excoveralls, ">= 0.5.0", only: [:dev, :test]},
      {:dogma, ">= 0.1.0", only: [:dev, :test]},
