@@ -7,7 +7,7 @@
         excluded: []
       },
       checks: [
-        {Credo.Check.Design.TagTODO, exit_status: 0}
+        {Credo.Check.Design.TagTODO, exit_status: 0},
       ]
     }
   ]

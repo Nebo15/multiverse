@@ -1,0 +1,9 @@
+{
+  "skip_files": [
+    "test/*"
+  ],
+  "coverage_options": {
+    "treat_no_relevant_lines_as_covered": true,
+    "output_dir": "cover/",
+  }
+}
