@@ -73,15 +73,15 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   defmodule AccountTypeChange do
     @behaviour Multiverse.Change
 
-    def mutate_request(%Plug.Conn{} = conn) do
+    def handle_request(%Plug.Conn{} = conn) do
       # Mutate your request here
-      IO.inspect "AccountTypeChange.mutate_request applied to request"
+      IO.inspect "AccountTypeChange.handle_request applied to request"
       conn
     end
 
-    def mutate_response(%Plug.Conn{} = conn) do
+    def handle_response(%Plug.Conn{} = conn) do
       # Mutate your response here
-      IO.inspect "AccountTypeChange.mutate_response applied to response"
+      IO.inspect "AccountTypeChange.handle_response applied to response"
       conn
     end
   end
