@@ -8,20 +8,20 @@ defmodule Multiverse.Adapters.ISODateTest do
 
   test "chronologically orders gates" do
     assert %{gates: gates} =
-      Multiverse.init(gates: %{
-        ~D[2002-03-01] => [],
-        ~D[2001-02-01] => [],
-        ~D[2001-01-01] => [],
-        ~D[2001-02-02] => [],
-      })
+             Multiverse.init(gates: %{
+               ~D[2002-03-01] => [],
+               ~D[2001-02-01] => [],
+               ~D[2001-01-01] => [],
+               ~D[2001-02-02] => []
+             })
 
     assert gates ==
-      %{
-        ~D[2001-01-01] => [],
-        ~D[2001-02-01] => [],
-        ~D[2001-02-02] => [],
-        ~D[2002-03-01] => [],
-      }
+             %{
+               ~D[2001-01-01] => [],
+               ~D[2001-02-01] => [],
+               ~D[2001-02-02] => [],
+               ~D[2002-03-01] => []
+             }
   end
 
   test "fetches API version from date in x-api-version header", %{conn: conn} do
@@ -47,7 +47,7 @@ defmodule Multiverse.Adapters.ISODateTest do
       adapter: Multiverse.Adapters.ISODate,
       gates: %{
         ~D[2002-03-01] => [],
-        ~D[2001-02-01] => [],
+        ~D[2001-02-01] => []
       },
       version_header: "x-api-version"
     }

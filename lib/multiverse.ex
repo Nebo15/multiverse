@@ -9,10 +9,10 @@ defmodule Multiverse do
   @behaviour Plug
 
   @type config :: %{
-    adapter: module,
-    version_header: String.t,
-    gates: Multiverse.Adapter.gates
-  }
+          adapter: module,
+          version_header: String.t(),
+          gates: Multiverse.Adapter.gates()
+        }
 
   defmodule VersionSchema do
     @moduledoc """
@@ -43,9 +43,10 @@ defmodule Multiverse do
     * `:version_header` - header which is used to fetch consumer version;
     * `:gates` - list of gates (and changes) that are available for consumers.
   """
-  @spec init(opts :: Keyword.t) :: config
+  @spec init(opts :: Keyword.t()) :: config
   def init(opts) do
     endpoint = Keyword.get(opts, :endpoint)
+
     opts =
       if endpoint do
         Keyword.merge(opts, Application.get_env(:multiverse, endpoint, []))
@@ -56,6 +57,7 @@ defmodule Multiverse do
     adapter = Keyword.get(opts, :adapter, @default_adapter)
     config = Multiverse.Adapter.compile_config!(adapter, opts)
     version_header = Keyword.get(opts, :version_header, @default_version_header)
+
     gates =
       config
       |> Keyword.get(:gates, [])
@@ -76,8 +78,9 @@ defmodule Multiverse do
 
   defp enshure_change_loaded(change_mod) do
     unless Code.ensure_loaded?(change_mod) do
-      raise ArgumentError, "change module #{inspect change_mod} was not compiled, " <>
-                           "ensure it is correct and it is included as a project dependency"
+      raise ArgumentError,
+            "change module #{inspect(change_mod)} was not compiled, " <>
+              "ensure it is correct and it is included as a project dependency"
     end
   end
 
@@ -87,11 +90,12 @@ defmodule Multiverse do
     |> Enum.into(%{})
   end
 
-  @spec call(conn :: Plug.Conn.t, config :: config) :: Plug.Conn.t
+  @spec call(conn :: Plug.Conn.t(), config :: config) :: Plug.Conn.t()
   def call(conn, config) do
     %{adapter: adapter, version_header: version_header, gates: gates} = config
     {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
     version_changes = changes_for_version(adapter, consumer_api_version, gates)
+
     version_schema =
       %Multiverse.VersionSchema{
         adapter: adapter,
@@ -123,16 +127,16 @@ defmodule Multiverse do
     end)
   end
 
-  defp apply_request_changes(conn, %{changes: []}),
-    do: conn
+  defp apply_request_changes(conn, %{changes: []}), do: conn
+
   defp apply_request_changes(conn, %{changes: changes}) do
     Enum.reduce(changes, conn, fn change_mod, conn ->
       change_mod.handle_request(conn)
     end)
   end
 
-  defp apply_response_changes(conn, %{changes: []}),
-    do: conn
+  defp apply_response_changes(conn, %{changes: []}), do: conn
+
   defp apply_response_changes(conn, %{changes: changes}) do
     Enum.reduce(changes, conn, fn change_mod, conn ->
       Plug.Conn.register_before_send(conn, fn conn ->

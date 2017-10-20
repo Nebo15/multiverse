@@ -13,7 +13,7 @@ defmodule Multiverse.Adapter do
   This callback can be used to fetch Multiverse configuration
   from application environment, file or other places.
   """
-  @callback init(adapter :: module, opts :: Keyword.t) :: {:ok, Keyword.t}
+  @callback init(adapter :: module, opts :: Keyword.t()) :: {:ok, Keyword.t()}
 
   @doc """
   Comparator that is used to order and filter versions that
@@ -31,8 +31,7 @@ defmodule Multiverse.Adapter do
   Additionally adapters may use it to fallback to default version
   in case of errors or when version header value is malformed.
   """
-  @callback fetch_default_version(conn :: Plug.Conn.t) :: {:ok, version, Plug.Conn.t}
-
+  @callback fetch_default_version(conn :: Plug.Conn.t()) :: {:ok, version, Plug.Conn.t()}
 
   @doc """
   Resolve version by string value from request header.
@@ -47,16 +46,20 @@ defmodule Multiverse.Adapter do
   You can terminate connection if you want to return error without
   further processing of the request.
   """
-  @callback resolve_version_or_channel(conn :: Plug.Conn.t,
-                                       channel_name_or_version :: String.t) :: {:ok, version, Plug.Conn.t}
+  @callback resolve_version_or_channel(conn :: Plug.Conn.t(), channel_name_or_version :: String.t()) :: {
+              :ok,
+              version,
+              Plug.Conn.t()
+            }
 
   @doc false
   # Resolves adapter configuration at compile time
-  @spec compile_config!(adapter :: module, opts :: Keyword.t) :: Keyword.t
+  @spec compile_config!(adapter :: module, opts :: Keyword.t()) :: Keyword.t()
   def compile_config!(adapter, opts) do
     unless Code.ensure_loaded?(adapter) do
-      raise ArgumentError, "adapter #{inspect(adapter)} was not compiled, " <>
-                           "ensure it is correct and it is included as a project dependency"
+      raise ArgumentError,
+            "adapter #{inspect(adapter)} was not compiled, " <>
+              "ensure it is correct and it is included as a project dependency"
     end
 
     case adapter.init(adapter, opts) do

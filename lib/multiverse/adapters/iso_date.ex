@@ -14,27 +14,25 @@ defmodule Multiverse.Adapters.ISODate do
 
   @behaviour Multiverse.Adapter
 
-  @type version :: Date.t
+  @type version :: Date.t()
 
-  def init(_adapter, opts),
-    do: {:ok, opts}
+  def init(_adapter, opts), do: {:ok, opts}
 
   @spec version_comparator(v1 :: version, v2 :: version) :: boolean
-  def version_comparator("edge", _v2),
-    do: false
-  def version_comparator(v1, v2),
-    do: Date.compare(v1, v2) != :gt
+  def version_comparator("edge", _v2), do: false
+  def version_comparator(v1, v2), do: Date.compare(v1, v2) != :gt
 
-  @spec fetch_default_version(conn :: Plug.Conn.t) :: {:ok, version, Plug.Conn.t}
-  def fetch_default_version(conn),
-    do: {:ok, Date.utc_today(), conn}
+  @spec fetch_default_version(conn :: Plug.Conn.t()) :: {:ok, version, Plug.Conn.t()}
+  def fetch_default_version(conn), do: {:ok, Date.utc_today(), conn}
 
-  @spec resolve_version_or_channel(conn :: Plug.Conn.t,
-                                   channel_name_or_version :: String.t) :: {:ok, version, Plug.Conn.t}
-  def resolve_version_or_channel(conn, "latest"),
-    do: fetch_default_version(conn)
-  def resolve_version_or_channel(conn, "edge"),
-    do: {:ok, "edge", conn}
+  @spec resolve_version_or_channel(conn :: Plug.Conn.t(), channel_name_or_version :: String.t()) :: {
+          :ok,
+          version,
+          Plug.Conn.t()
+        }
+  def resolve_version_or_channel(conn, "latest"), do: fetch_default_version(conn)
+  def resolve_version_or_channel(conn, "edge"), do: {:ok, "edge", conn}
+
   def resolve_version_or_channel(conn, version) do
     case Date.from_iso8601(version) do
       {:ok, date} ->
