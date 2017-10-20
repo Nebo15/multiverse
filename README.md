@@ -25,7 +25,7 @@ Multiverse allows you to use a custom adapter which can, for eg.:
 
 Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the current date.
 
-Alsop, it allows to use channel name instead of date, where:
+Also, it allows to use channel name instead of date, where:
 
   - `latest` channel would fallback to the current date;
   - `edge` channel would disable all changes altogether.
