@@ -20,7 +20,7 @@ defmodule Multiverse.Adapters.ISODate do
 
   @spec version_comparator(v1 :: version, v2 :: version) :: boolean
   def version_comparator("edge", _v2), do: false
-  def version_comparator(v1, v2), do: Date.compare(v1, v2) != :gt
+  def version_comparator(v1, v2), do: Date.compare(v1, v2) == :lt
 
   @spec fetch_default_version(conn :: Plug.Conn.t()) :: {:ok, version, Plug.Conn.t()}
   def fetch_default_version(conn), do: {:ok, Date.utc_today(), conn}

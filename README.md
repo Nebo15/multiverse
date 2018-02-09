@@ -42,7 +42,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   ```elixir
   def deps do
-    [{:multiverse, "~> 1.0.1"}]
+    [{:multiverse, "~> 1.1.0"}]
   end
   ```
 
@@ -100,7 +100,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   end
   ```
 
-  4. Send your API requests with ```X-API-Version``` header with version lower or equal to ```2016-07-21```.
+  4. Send your API requests with ```X-API-Version``` header with version lower or equal to ```2016-07-20```.
 
 ### Overriding version header
 

@@ -151,7 +151,7 @@ defmodule MultiverseTest do
       assert length(conn.before_send) == 3
     end
 
-    test "applies specified date changes", %{conn: conn} do
+    test "does not apply changes occurred on a specified date", %{conn: conn} do
       opts = %{
         adapter: Multiverse.Adapters.ISODate,
         gates: %{
@@ -168,21 +168,17 @@ defmodule MultiverseTest do
         |> Multiverse.call(opts)
         |> send_resp(204, "")
 
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
+      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
+      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
       assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
 
       assert conn.assigns.applied_changes ==
                [
-                 :"Elixir.MultiverseTest.ChangeOne.handle_request",
-                 :"Elixir.MultiverseTest.ChangeTwo.handle_request",
                  :"Elixir.MultiverseTest.ChangeThree.handle_request",
                  :"Elixir.MultiverseTest.ChangeThree.handle_response",
-                 :"Elixir.MultiverseTest.ChangeTwo.handle_response",
-                 :"Elixir.MultiverseTest.ChangeOne.handle_response"
                ]
 
-      assert length(conn.before_send) == 3
+      assert length(conn.before_send) == 1
     end
 
     test "ignores older changes", %{conn: conn} do
