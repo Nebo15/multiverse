@@ -96,12 +96,11 @@ defmodule Multiverse do
     {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
     version_changes = changes_for_version(adapter, consumer_api_version, gates)
 
-    version_schema =
-      %Multiverse.VersionSchema{
-        adapter: adapter,
-        version: consumer_api_version,
-        changes: version_changes
-      }
+    version_schema = %Multiverse.VersionSchema{
+      adapter: adapter,
+      version: consumer_api_version,
+      changes: version_changes
+    }
 
     conn
     |> apply_request_changes(version_schema)

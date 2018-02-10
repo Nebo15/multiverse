@@ -57,9 +57,11 @@ defmodule MultiverseTest do
 
     test "raises when change is not loaded" do
       assert_raise ArgumentError, ~r/NotLoadedChange was not compiled/, fn ->
-        Multiverse.init(gates: %{
-          ~D[2001-01-01] => [NotLoadedChange]
-        })
+        Multiverse.init(
+          gates: %{
+            ~D[2001-01-01] => [NotLoadedChange]
+          }
+        )
       end
     end
 
@@ -87,7 +89,7 @@ defmodule MultiverseTest do
     end
 
     test "resolves configuration via adapter init/2 callback" do
-      %{version_header: "test-adapter-version-header"} = Multiverse.init([adapter: Multiverse.TestAdapter])
+      %{version_header: "test-adapter-version-header"} = Multiverse.init(adapter: Multiverse.TestAdapter)
     end
   end
 
@@ -179,7 +181,7 @@ defmodule MultiverseTest do
       assert conn.assigns.applied_changes ==
                [
                  :"Elixir.MultiverseTest.ChangeThree.handle_request",
-                 :"Elixir.MultiverseTest.ChangeThree.handle_response",
+                 :"Elixir.MultiverseTest.ChangeThree.handle_response"
                ]
 
       assert length(conn.before_send) == 1

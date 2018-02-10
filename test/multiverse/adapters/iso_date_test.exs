@@ -8,12 +8,14 @@ defmodule Multiverse.Adapters.ISODateTest do
 
   test "chronologically orders gates" do
     assert %{gates: gates} =
-             Multiverse.init(gates: %{
-               ~D[2002-03-01] => [],
-               ~D[2001-02-01] => [],
-               ~D[2001-01-01] => [],
-               ~D[2001-02-02] => []
-             })
+             Multiverse.init(
+               gates: %{
+                 ~D[2002-03-01] => [],
+                 ~D[2001-02-01] => [],
+                 ~D[2001-01-01] => [],
+                 ~D[2001-02-02] => []
+               }
+             )
 
     assert gates ==
              %{

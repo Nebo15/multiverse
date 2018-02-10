@@ -14,7 +14,7 @@ defmodule Multiverse.Adapters.ISODate do
 
   @behaviour Multiverse.Adapter
 
-  @type version :: Date.t()
+  @typep version :: Date.t()
 
   def init(_adapter, opts), do: {:ok, opts}
 
@@ -30,8 +30,13 @@ defmodule Multiverse.Adapters.ISODate do
           version,
           Plug.Conn.t()
         }
-  def resolve_version_or_channel(conn, "latest"), do: fetch_default_version(conn)
-  def resolve_version_or_channel(conn, "edge"), do: {:ok, "edge", conn}
+  def resolve_version_or_channel(conn, "latest") do
+    fetch_default_version(conn)
+  end
+
+  def resolve_version_or_channel(conn, "edge") do
+    {:ok, "edge", conn}
+  end
 
   def resolve_version_or_channel(conn, version) do
     case Date.from_iso8601(version) do
