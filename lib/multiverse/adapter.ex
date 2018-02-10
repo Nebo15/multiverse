@@ -46,7 +46,7 @@ defmodule Multiverse.Adapter do
   You can terminate connection if you want to return error without
   further processing of the request.
   """
-  @callback resolve_version_or_channel(conn :: Plug.Conn.t(), channel_name_or_version :: String.t()) :: {
+  @callback resolve_version_or_channel(conn :: Plug.Conn.t(), channel_or_version :: String.t()) :: {
               :ok,
               version,
               Plug.Conn.t()

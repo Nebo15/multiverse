@@ -25,7 +25,7 @@ defmodule Multiverse.Adapters.ISODate do
   @spec fetch_default_version(conn :: Plug.Conn.t()) :: {:ok, version, Plug.Conn.t()}
   def fetch_default_version(conn), do: {:ok, Date.utc_today(), conn}
 
-  @spec resolve_version_or_channel(conn :: Plug.Conn.t(), channel_name_or_version :: String.t()) :: {
+  @spec resolve_version_or_channel(conn :: Plug.Conn.t(), channel_or_version :: String.t()) :: {
           :ok,
           version,
           Plug.Conn.t()
