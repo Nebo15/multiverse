@@ -70,13 +70,13 @@ defmodule Multiverse do
   defp enshure_changes_loaded!(gates) do
     # credo:disable-for-lines:3
     Enum.map(gates, fn {_version, changes} ->
-      Enum.map(changes, &enshure_change_loaded/1)
+      Enum.map(changes, &enshure_change_loaded!/1)
     end)
 
     gates
   end
 
-  defp enshure_change_loaded(change_mod) do
+  defp enshure_change_loaded!(change_mod) do
     unless Code.ensure_loaded?(change_mod) do
       raise ArgumentError,
             "change module #{inspect(change_mod)} was not compiled, " <>
