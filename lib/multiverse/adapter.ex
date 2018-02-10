@@ -73,7 +73,7 @@ defmodule Multiverse.Adapter do
         Adapter must implement `init/2` callback which
         returns `{:ok, config}` tuple.
 
-        Returned value `#{inspect(error)}`
+        Returned value: #{inspect(error)}
         """
     end
   end
