@@ -85,12 +85,12 @@ defmodule Multiverse do
   end
 
   defp sort_gates(gates, adapter) do
-    gates
-    |> Enum.sort_by(fn {gate_version, _gate_changes} -> gate_version end, &adapter.version_comparator/2)
-    |> Enum.into(%{})
+    Enum.sort_by(gates, fn {version, _changes} -> version end, &reverse_version_comparator(adapter, &1, &2))
   end
 
-  @spec call(conn :: Plug.Conn.t(), config :: config) :: Plug.Conn.t()
+  defp reverse_version_comparator(adapter, v1, v2), do: not adapter.version_comparator(v1, v2)
+
+  @spec call(conn :: Plug.Conn.t(), config :: config()) :: Plug.Conn.t()
   def call(conn, config) do
     %{adapter: adapter, version_header: version_header, gates: gates} = config
     {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
@@ -117,11 +117,11 @@ defmodule Multiverse do
   end
 
   defp changes_for_version(adapter, consumer_version, gates) do
-    Enum.reduce(gates, [], fn {gate_version, gate_changes}, changes ->
+    Enum.reduce_while(gates, [], fn {gate_version, gate_changes}, changes ->
       if adapter.version_comparator(consumer_version, gate_version) do
-        changes ++ gate_changes
+        {:cont, gate_changes ++ changes}
       else
-        changes
+        {:halt, changes}
       end
     end)
   end
