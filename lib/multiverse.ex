@@ -7,6 +7,7 @@ defmodule Multiverse do
   For more information see [README.md](https://github.com/Nebo15/multiverse/).
   """
   @behaviour Plug
+  alias Plug.Conn
 
   @type config :: %{
           adapter: module,
@@ -105,11 +106,11 @@ defmodule Multiverse do
     conn
     |> apply_request_changes(version_schema)
     |> apply_response_changes(version_schema)
-    |> Plug.Conn.put_private(:multiverse_version_schema, version_schema)
+    |> Conn.put_private(:multiverse_version_schema, version_schema)
   end
 
   defp fetch_consumer_api_version(adapter, conn, version_header) do
-    case Plug.Conn.get_req_header(conn, version_header) do
+    case Conn.get_req_header(conn, version_header) do
       [] -> adapter.fetch_default_version(conn)
       ["" | _] -> adapter.fetch_default_version(conn)
       [version_or_channel | _] -> adapter.resolve_version_or_channel(conn, version_or_channel)
@@ -138,7 +139,7 @@ defmodule Multiverse do
 
   defp apply_response_changes(conn, %{changes: changes}) do
     Enum.reduce(changes, conn, fn change_mod, conn ->
-      Plug.Conn.register_before_send(conn, fn conn ->
+      Conn.register_before_send(conn, fn conn ->
         change_mod.handle_response(conn)
       end)
     end)
