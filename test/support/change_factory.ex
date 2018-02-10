@@ -1,4 +1,4 @@
-defmodule ChangeFactory do
+defmodule Multiverse.ChangeFactory do
   @moduledoc false
 
   defmacro __using__(_opts) do

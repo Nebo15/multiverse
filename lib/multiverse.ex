@@ -56,7 +56,7 @@ defmodule Multiverse do
 
     adapter = Keyword.get(opts, :adapter, @default_adapter)
     config = Multiverse.Adapter.compile_config!(adapter, opts)
-    version_header = Keyword.get(opts, :version_header, @default_version_header)
+    version_header = Keyword.get(config, :version_header, @default_version_header)
 
     gates =
       config

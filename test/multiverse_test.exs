@@ -7,19 +7,19 @@ defmodule MultiverseTest do
   use Plug.Test
 
   defmodule ChangeOne do
-    use ChangeFactory
+    use Multiverse.ChangeFactory
   end
 
   defmodule ChangeTwo do
-    use ChangeFactory
+    use Multiverse.ChangeFactory
   end
 
   defmodule ChangeThree do
-    use ChangeFactory
+    use Multiverse.ChangeFactory
   end
 
   defmodule ChangeFour do
-    use ChangeFactory
+    use Multiverse.ChangeFactory
   end
 
   defmodule MissbehavingAdapter do
@@ -84,6 +84,10 @@ defmodule MultiverseTest do
       assert_raise ArgumentError, ~r/MyAdapter was not compiled/, fn ->
         Multiverse.init(endpoint: MyEndpoint)
       end
+    end
+
+    test "resolves configuration via adapter init/2 callback" do
+      %{version_header: "test-adapter-version-header"} = Multiverse.init([adapter: Multiverse.TestAdapter])
     end
   end
 
