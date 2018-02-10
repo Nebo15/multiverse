@@ -6,7 +6,7 @@ defmodule Multiverse.TestAdapter do
 
   def version_comparator(_v1, _v2), do: raise("not implemented")
 
-  def fetch_default_version(_conn), do: raise("not implemented")
+  def fetch_default_version(_conn, _adapter_config), do: raise("not implemented")
 
-  def resolve_version_or_channel(_conn, _version), do: raise("not implemented")
+  def resolve_version_or_channel(_conn, _version, _adapter_config), do: raise("not implemented")
 end

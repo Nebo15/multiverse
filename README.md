@@ -63,7 +63,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
     plug :accepts, ["json"]
     plug :put_secure_browser_headers
 
-    plug Multiverse
+    plug Multiverse, default_version: :latest
   end
   ```
 
@@ -94,9 +94,11 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
     plug :accepts, ["json"]
     plug :put_secure_browser_headers
 
-    plug Multiverse, gates: %{
-      ~D[2016-07-21] => [AccountTypeChange]
-    }
+    plug Multiverse,
+      default_version: :latest,
+      gates: %{
+        ~D[2016-07-21] => [AccountTypeChange]
+      }
   end
   ```
 
@@ -112,6 +114,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
     plug :put_secure_browser_headers
 
     plug Multiverse,
+      default_version: :latest,
       version_header: "x-my-version-header",
       gates: %{
         ~D[2016-07-21] => [AccountTypeChange]
@@ -129,6 +132,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
     plug :put_secure_browser_headers
 
     plug Multiverse,
+      default_version: :latest,
       adapter: MyApp.SmartMultiverseAdapter,
       gates: %{
         ~D[2016-07-21] => [AccountTypeChange]
@@ -155,6 +159,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   use Mix.Config
 
   config :multiverse, MyApp.Endpoint,
+    default_version: :latest,
     gates: %{
       ~D[2016-07-21] => [AccountTypeChange]
     }

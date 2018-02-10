@@ -1,6 +1,7 @@
 defmodule MultiverseTest do
   use ExUnit.Case, async: true
   use Plug.Test
+  alias Multiverse.Change
   doctest Multiverse
 
   use ExUnit.Case, async: true
@@ -37,35 +38,37 @@ defmodule MultiverseTest do
       end
     end
 
-    test "raises when adapter can not be initialized not loaded" do
+    test "raises when adapter returns malformed response" do
       assert_raise ArgumentError, ~r/Can not initialize MultiverseTest.MissbehavingAdapter/, fn ->
         Multiverse.init(adapter: MissbehavingAdapter)
       end
     end
 
     test "falls back to default adapter" do
-      %{adapter: Multiverse.Adapters.ISODate} = Multiverse.init([])
+      %{adapter: Multiverse.Adapters.ISODate} = Multiverse.init(default_version: :latest)
     end
 
     test "falls back to default version header" do
-      %{version_header: "x-api-version"} = Multiverse.init([])
+      %{version_header: "x-api-version"} = Multiverse.init(default_version: :latest)
     end
 
     test "allows to override version header" do
-      %{version_header: "custom-version-header"} = Multiverse.init(version_header: "custom-version-header")
+      opts = [default_version: :latest, version_header: "custom-version-header"]
+      %{version_header: "custom-version-header"} = Multiverse.init(opts)
     end
 
     test "raises when change is not loaded" do
       assert_raise ArgumentError, ~r/NotLoadedChange was not compiled/, fn ->
-        Multiverse.init(gates: [{~D[2001-01-01], [NotLoadedChange]}])
+        Multiverse.init(default_version: :latest, gates: [{~D[2001-01-01], [NotLoadedChange]}])
       end
     end
 
-    test "resolves options from application environment" do
+    test "reads configuration from application environment" do
       env = [
         adapter: Multiverse.Adapters.ISODate,
         gates: [{~D[2001-01-01], [ChangeOne]}],
-        version_header: "custom-version-header"
+        version_header: "custom-version-header",
+        default_version: :latest
       ]
 
       Application.put_env(:multiverse, MyEndpoint, env)
@@ -74,7 +77,13 @@ defmodule MultiverseTest do
                %{
                  version_header: "custom-version-header",
                  gates: [{~D[2001-01-01], [ChangeOne]}],
-                 adapter: Multiverse.Adapters.ISODate
+                 adapter: Multiverse.Adapters.ISODate,
+                 adapter_config: [
+                   gates: [{~D[2001-01-01], [ChangeOne]}],
+                   endpoint: MyEndpoint,
+                   version_header: "custom-version-header",
+                   default_version: :latest
+                 ]
                }
 
       Application.put_env(:multiverse, MyEndpoint, adapter: MyAdapter)
@@ -90,43 +99,37 @@ defmodule MultiverseTest do
   end
 
   describe "call/2" do
-    test "works with default options", %{conn: conn} do
-      config = Multiverse.init([])
+    test "requires only adapter options", %{conn: conn} do
+      config = Multiverse.init(default_version: :latest)
       conn = Multiverse.call(conn, config)
-
       assert conn.assigns == %{}
       assert conn.before_send == []
+    end
 
-      # Stores %Multiverse.VersionSchema{} in conn.private
+    test "stores version schema in conn.private", %{conn: conn} do
+      config = Multiverse.init(default_version: :latest)
+      conn = Multiverse.call(conn, config)
+
       assert conn.private.multiverse_version_schema ==
                %Multiverse.VersionSchema{changes: [], adapter: Multiverse.Adapters.ISODate, version: Date.utc_today()}
     end
 
-    test "handles empty gates", %{conn: conn} do
-      config = %{adapter: Multiverse.Adapters.ISODate, gates: [], version_header: "x-api-version"}
+    test "fetches consumer version from headers", %{conn: conn} do
+      config = Multiverse.init(version_header: "x-my-api-version", default_version: :latest)
+      conn = %{conn | req_headers: [{"x-my-api-version", "2001-01-01"}]}
       conn = Multiverse.call(conn, config)
-      assert conn.assigns == %{}
-      assert conn.before_send == []
+      assert conn.private.multiverse_version_schema.version == ~D[2001-01-01]
     end
 
-    test "resolves empty version to current gate", %{conn: conn} do
-      config = %{adapter: Multiverse.Adapters.ISODate, gates: [], version_header: "x-api-version"}
-
-      conn = %{conn | req_headers: [{"x-api-version", ""}]}
-      conn = Multiverse.call(conn, config)
-
-      assert conn.private.multiverse_version_schema.version == Date.utc_today()
-    end
-
-    test "applies changes in correct order", %{conn: conn} do
-      config = %{
-        adapter: Multiverse.Adapters.ISODate,
-        gates: [
-          {~D[2002-03-01], [ChangeThree]},
-          {~D[2001-02-01], [ChangeOne, ChangeTwo]}
-        ],
-        version_header: "x-api-version"
-      }
+    test "applies changes in chronological order", %{conn: conn} do
+      config =
+        Multiverse.init(
+          default_version: :latest,
+          gates: [
+            {~D[2002-03-01], [ChangeThree]},
+            {~D[2001-02-01], [ChangeOne, ChangeTwo]}
+          ]
+        )
 
       conn = %{conn | req_headers: [{"x-api-version", "2001-01-01"}]}
 
@@ -136,9 +139,9 @@ defmodule MultiverseTest do
         |> send_resp(204, "")
 
       assert length(conn.private.multiverse_version_schema.changes) == 3
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
+      assert Change.active?(conn, MultiverseTest.ChangeOne)
+      assert Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Change.active?(conn, MultiverseTest.ChangeThree)
 
       assert conn.assigns.applied_changes ==
                [
@@ -153,15 +156,15 @@ defmodule MultiverseTest do
       assert length(conn.before_send) == 3
     end
 
-    test "does not apply changes occurred on a specified date", %{conn: conn} do
-      config = %{
-        adapter: Multiverse.Adapters.ISODate,
-        gates: [
-          {~D[2002-03-01], [ChangeThree]},
-          {~D[2001-02-01], [ChangeOne, ChangeTwo]}
-        ],
-        version_header: "x-api-version"
-      }
+    test "does not apply changes occurred on a specified version", %{conn: conn} do
+      config =
+        Multiverse.init(
+          default_version: :latest,
+          gates: [
+            {~D[2002-03-01], [ChangeThree]},
+            {~D[2001-02-01], [ChangeOne, ChangeTwo]}
+          ]
+        )
 
       conn = %{conn | req_headers: [{"x-api-version", "2001-02-01"}]}
 
@@ -170,9 +173,9 @@ defmodule MultiverseTest do
         |> Multiverse.call(config)
         |> send_resp(204, "")
 
-      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
-      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
+      refute Change.active?(conn, MultiverseTest.ChangeOne)
+      refute Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Change.active?(conn, MultiverseTest.ChangeThree)
 
       assert conn.assigns.applied_changes ==
                [
@@ -183,15 +186,15 @@ defmodule MultiverseTest do
       assert length(conn.before_send) == 1
     end
 
-    test "ignores older changes", %{conn: conn} do
-      config = %{
-        adapter: Multiverse.Adapters.ISODate,
-        gates: [
-          {~D[2002-03-01], [ChangeThree]},
-          {~D[2001-02-01], [ChangeOne, ChangeTwo]}
-        ],
-        version_header: "x-api-version"
-      }
+    test "does not apply older changes", %{conn: conn} do
+      config =
+        Multiverse.init(
+          default_version: :latest,
+          gates: [
+            {~D[2002-03-01], [ChangeThree]},
+            {~D[2001-02-01], [ChangeOne, ChangeTwo]}
+          ]
+        )
 
       conn = %{conn | req_headers: [{"x-api-version", "2001-02-02"}]}
 
@@ -200,9 +203,9 @@ defmodule MultiverseTest do
         |> Multiverse.call(config)
         |> send_resp(204, "")
 
-      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeOne)
-      refute Multiverse.Change.active?(conn, MultiverseTest.ChangeTwo)
-      assert Multiverse.Change.active?(conn, MultiverseTest.ChangeThree)
+      refute Change.active?(conn, MultiverseTest.ChangeOne)
+      refute Change.active?(conn, MultiverseTest.ChangeTwo)
+      assert Change.active?(conn, MultiverseTest.ChangeThree)
 
       assert conn.assigns.applied_changes ==
                [
@@ -211,28 +214,6 @@ defmodule MultiverseTest do
                ]
 
       assert length(conn.before_send) == 1
-    end
-
-    test "does not affect edge consumers", %{conn: conn} do
-      config = %{
-        adapter: Multiverse.Adapters.ISODate,
-        gates: [
-          {~D[2002-03-01], [ChangeThree]},
-          {~D[2001-02-01], [ChangeOne, ChangeTwo]}
-        ],
-        version_header: "x-api-version"
-      }
-
-      conn = %{conn | req_headers: [{"x-api-version", "edge"}]}
-
-      conn =
-        conn
-        |> Multiverse.call(config)
-        |> send_resp(204, "")
-
-      assert conn.private.multiverse_version_schema.changes == []
-      refute Map.get(conn.assigns, :applied_changes)
-      assert conn.before_send == []
     end
   end
 end

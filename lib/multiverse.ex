@@ -12,7 +12,8 @@ defmodule Multiverse do
   @type config :: %{
           adapter: module,
           version_header: String.t(),
-          gates: Multiverse.Adapter.gates()
+          gates: Multiverse.Adapter.gates(),
+          adapter_config: Multiverse.Adapter.config()
         }
 
   defmodule VersionSchema do
@@ -55,7 +56,7 @@ defmodule Multiverse do
         opts
       end
 
-    adapter = Keyword.get(opts, :adapter, @default_adapter)
+    {adapter, opts} = Keyword.pop(opts, :adapter, @default_adapter)
     config = Multiverse.Adapter.compile_config!(adapter, opts)
     version_header = Keyword.get(config, :version_header, @default_version_header)
 
@@ -65,7 +66,9 @@ defmodule Multiverse do
       |> enshure_changes_loaded!()
       |> sort_gates(adapter)
 
-    %{adapter: adapter, version_header: version_header, gates: gates}
+    config = Keyword.put(config, :gates, gates)
+
+    %{adapter: adapter, version_header: version_header, gates: gates, adapter_config: config}
   end
 
   defp enshure_changes_loaded!(gates) do
@@ -93,8 +96,8 @@ defmodule Multiverse do
 
   @spec call(conn :: Plug.Conn.t(), config :: config()) :: Plug.Conn.t()
   def call(conn, config) do
-    %{adapter: adapter, version_header: version_header, gates: gates} = config
-    {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
+    %{adapter: adapter, version_header: version_header, gates: gates, adapter_config: adapter_config} = config
+    {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header, adapter_config)
     version_changes = changes_for_version(adapter, consumer_api_version, gates)
 
     version_schema = %Multiverse.VersionSchema{
@@ -109,11 +112,11 @@ defmodule Multiverse do
     |> Conn.put_private(:multiverse_version_schema, version_schema)
   end
 
-  defp fetch_consumer_api_version(adapter, conn, version_header) do
+  defp fetch_consumer_api_version(adapter, conn, version_header, adapter_config) do
     case Conn.get_req_header(conn, version_header) do
-      [] -> adapter.fetch_default_version(conn)
-      ["" | _] -> adapter.fetch_default_version(conn)
-      [version_or_channel | _] -> adapter.resolve_version_or_channel(conn, version_or_channel)
+      [] -> adapter.fetch_default_version(conn, adapter_config)
+      ["" | _] -> adapter.fetch_default_version(conn, adapter_config)
+      [version_or_channel | _] -> adapter.resolve_version_or_channel(conn, version_or_channel, adapter_config)
     end
   end
 
