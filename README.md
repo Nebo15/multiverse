@@ -19,7 +19,7 @@ Inspired by Stripe API. Read more at [MOVE FAST, DON'T BREAK YOUR API](http://am
 
 Multiverse allows you to use a custom adapter which can, for eg.:
 
-  - store consumer version upon his first request and re-use it as default each time consumer is using your API, eliminating need of passing version headers for them. Change this version when consumer has explicitly set it;
+  - store consumer version upon his first request and re-use it as default each time consumer is using your API, eliminating need of passing version headers for them (a.k.a. version pinning). Change this version when consumer has explicitly set it;
   - use _other than ISO date_ version types, eg. incremental counters (`v1`, `v2`);
   - handle malformed versions by responding with JSON errors.
 
