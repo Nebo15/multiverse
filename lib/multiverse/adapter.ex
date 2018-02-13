@@ -5,7 +5,8 @@ defmodule Multiverse.Adapter do
 
   @type version :: any
   @type changes :: [module]
-  @type gates :: [%{version => changes}]
+  @typedoc "Gates are stored in a reversed chronological order"
+  @type gates :: [{version, changes}]
 
   @doc """
   Initialize adapter configuration at compile time.

@@ -7,6 +7,7 @@ defmodule Multiverse do
   For more information see [README.md](https://github.com/Nebo15/multiverse/).
   """
   @behaviour Plug
+  alias Plug.Conn
 
   @type config :: %{
           adapter: module,
@@ -85,12 +86,12 @@ defmodule Multiverse do
   end
 
   defp sort_gates(gates, adapter) do
-    gates
-    |> Enum.sort_by(fn {gate_version, _gate_changes} -> gate_version end, &adapter.version_comparator/2)
-    |> Enum.into(%{})
+    Enum.sort_by(gates, fn {version, _changes} -> version end, &reverse_version_comparator(adapter, &1, &2))
   end
 
-  @spec call(conn :: Plug.Conn.t(), config :: config) :: Plug.Conn.t()
+  defp reverse_version_comparator(adapter, v1, v2), do: not adapter.version_comparator(v1, v2)
+
+  @spec call(conn :: Plug.Conn.t(), config :: config()) :: Plug.Conn.t()
   def call(conn, config) do
     %{adapter: adapter, version_header: version_header, gates: gates} = config
     {:ok, consumer_api_version, conn} = fetch_consumer_api_version(adapter, conn, version_header)
@@ -105,11 +106,11 @@ defmodule Multiverse do
     conn
     |> apply_request_changes(version_schema)
     |> apply_response_changes(version_schema)
-    |> Plug.Conn.put_private(:multiverse_version_schema, version_schema)
+    |> Conn.put_private(:multiverse_version_schema, version_schema)
   end
 
   defp fetch_consumer_api_version(adapter, conn, version_header) do
-    case Plug.Conn.get_req_header(conn, version_header) do
+    case Conn.get_req_header(conn, version_header) do
       [] -> adapter.fetch_default_version(conn)
       ["" | _] -> adapter.fetch_default_version(conn)
       [version_or_channel | _] -> adapter.resolve_version_or_channel(conn, version_or_channel)
@@ -117,11 +118,11 @@ defmodule Multiverse do
   end
 
   defp changes_for_version(adapter, consumer_version, gates) do
-    Enum.reduce(gates, [], fn {gate_version, gate_changes}, changes ->
+    Enum.reduce_while(gates, [], fn {gate_version, gate_changes}, changes ->
       if adapter.version_comparator(consumer_version, gate_version) do
-        changes ++ gate_changes
+        {:cont, gate_changes ++ changes}
       else
-        changes
+        {:halt, changes}
       end
     end)
   end
@@ -138,7 +139,7 @@ defmodule Multiverse do
 
   defp apply_response_changes(conn, %{changes: changes}) do
     Enum.reduce(changes, conn, fn change_mod, conn ->
-      Plug.Conn.register_before_send(conn, fn conn ->
+      Conn.register_before_send(conn, fn conn ->
         change_mod.handle_response(conn)
       end)
     end)
