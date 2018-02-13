@@ -70,7 +70,8 @@ defmodule Multiverse.Adapters.ISODate do
       [] ->
         :ok =
           Logger.warn(fn ->
-            "[Multiverse] You specified default_version: :oldest but there are no gates, failing back to the current date"
+            "[Multiverse] You specified default_version: :oldest but there are no gates, " <>
+              "failing back to the current date"
           end)
 
         Date.utc_today()
