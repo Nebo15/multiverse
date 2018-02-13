@@ -42,7 +42,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
 
   ```elixir
   def deps do
-    [{:multiverse, "~> 1.1.0"}]
+    [{:multiverse, "~> 2.0.0"}]
   end
   ```
 
