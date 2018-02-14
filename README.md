@@ -23,7 +23,7 @@ Multiverse allows you to use a custom adapter which can, for eg.:
   - use _other than ISO date_ version types, eg. incremental counters (`v1`, `v2`);
   - handle malformed versions by responding with JSON errors.
 
-Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the current date.
+Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the default date (configured via `:default_version` setting).
 
 Also, it allows to use channel name instead of date, where:
 
