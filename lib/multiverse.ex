@@ -40,7 +40,8 @@ defmodule Multiverse do
   Raises at compile time when adapter or change is not loaded.
 
   Available options:
-    * `:endpoint` - endpoint which is used to fetch configuration from application environment;
+    * `:otp_app` and `:endpoint` - OTP app and endpoint which is used to fetch configuration from application \
+    environment;
     * `:adapter` - module which implements `Multiverse.Adapter` behaviour;
     * `:version_header` - header which is used to fetch consumer version;
     * `:gates` - list of gates (and changes) that are available for consumers.
@@ -48,10 +49,11 @@ defmodule Multiverse do
   @spec init(opts :: Keyword.t()) :: config
   def init(opts) do
     endpoint = Keyword.get(opts, :endpoint)
+    otp_app = Keyword.get(opts, :otp_app, :multiverse)
 
     opts =
       if endpoint do
-        Keyword.merge(opts, Application.get_env(:multiverse, endpoint, []))
+        Keyword.merge(opts, Application.get_env(otp_app, endpoint, []))
       else
         opts
       end

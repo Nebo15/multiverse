@@ -158,7 +158,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   ```elixir
   use Mix.Config
 
-  config :multiverse, MyApp.Endpoint,
+  config :my_app, MyApp.Endpoint,
     default_version: :latest,
     gates: %{
       ~D[2016-07-21] => [AccountTypeChange]
@@ -166,7 +166,7 @@ The package (take look at [hex.pm](https://hex.pm/packages/multiverse)) can be i
   ```
 
   ```elixir
-  plug Multiverse, endpoint: __MODULE__
+  plug Multiverse, otp_app: :my_app, endpoint: __MODULE__
   ```
 
 2. Generate API documentation from changes `@moduledoc`'s.

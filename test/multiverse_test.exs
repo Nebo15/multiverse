@@ -63,7 +63,7 @@ defmodule MultiverseTest do
       end
     end
 
-    test "reads configuration from application environment" do
+    test "reads configuration from multiverse application environment" do
       env = [
         adapter: Multiverse.Adapters.ISODate,
         gates: [{~D[2001-01-01], [ChangeOne]}],
@@ -90,6 +90,37 @@ defmodule MultiverseTest do
 
       assert_raise ArgumentError, ~r/MyAdapter was not compiled/, fn ->
         Multiverse.init(endpoint: MyEndpoint)
+      end
+    end
+
+    test "reads configuration from configured application environment" do
+      env = [
+        adapter: Multiverse.Adapters.ISODate,
+        gates: [{~D[2001-01-01], [ChangeOne]}],
+        version_header: "custom-version-header",
+        default_version: :latest
+      ]
+
+      Application.put_env(:multiverse_test, MyEndpoint, env)
+
+      assert Multiverse.init(otp_app: :multiverse_test, endpoint: MyEndpoint) ==
+               %{
+                 version_header: "custom-version-header",
+                 gates: [{~D[2001-01-01], [ChangeOne]}],
+                 adapter: Multiverse.Adapters.ISODate,
+                 adapter_config: [
+                   gates: [{~D[2001-01-01], [ChangeOne]}],
+                   otp_app: :multiverse_test,
+                   endpoint: MyEndpoint,
+                   version_header: "custom-version-header",
+                   default_version: :latest
+                 ]
+               }
+
+      Application.put_env(:multiverse_test, MyEndpoint, adapter: MyAdapter)
+
+      assert_raise ArgumentError, ~r/MyAdapter was not compiled/, fn ->
+        Multiverse.init(otp_app: :multiverse_test, endpoint: MyEndpoint)
       end
     end
 
