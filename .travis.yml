@@ -1,4 +1,8 @@
 language: elixir
+cache:
+  directories:
+    - deps
+    - _build
 elixir:
   - 1.5.0
 otp_release:
