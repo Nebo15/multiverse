@@ -23,9 +23,12 @@ Multiverse allows you to use a custom adapter which can, for eg.:
   - use _other than ISO date_ version types, eg. incremental counters (`v1`, `v2`);
   - handle malformed versions by responding with JSON errors.
 
-Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the default date (configured via `:default_version` setting).
+Default adapter works with ISO-8601 date from `x-api-version` header (configurable). For malformed versions it would log a warning and fallback to the default date (configured [via `:default_version` setting](https://hexdocs.pm/multiverse/2.0.0/Multiverse.Adapters.ISODate.html)):
 
-Also, it allows to use channel name instead of date, where:
+  - `:first` - apply all gates by default. This option is useful when you integrate Multiverse in existing project and API consumers are not ready to accept latest changes by default;
+  - `:latest` - user current date as default version. This option is useful when there are no legacy clients or there was no breaking changes before those clients started to send API version.
+
+ISO date adapter allows API clients to use channel name instead of date:
 
   - `latest` channel would fallback to the current date;
   - `edge` channel would disable all changes altogether.
