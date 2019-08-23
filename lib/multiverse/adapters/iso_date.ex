@@ -52,7 +52,7 @@ defmodule Multiverse.Adapters.ISODate do
 
   @spec version_comparator(v1 :: version(), v2 :: version()) :: boolean
   def version_comparator("edge", _v2), do: false
-  def version_comparator(v1, v2), do: Date.compare(v1, v2) == :lt
+  def version_comparator(v1, v2), do: Date.compare(v1, v2) in [:lt, :eq]
 
   @spec fetch_default_version(conn :: Plug.Conn.t(), adapter_config :: Multiverse.Adapter.config()) ::
           {:ok, version, Plug.Conn.t()}
